@@ -1,0 +1,6 @@
+﻿#ifndef LIGHT_DATA_HLSLI
+#define LIGHT_DATA_HLSLI
+
+
+
+#endif // LIGHT_DATA_HLSLI

@@ -1,0 +1,91 @@
+set(project Shaders)
+
+file(GLOB ShaderSrc  "*.hlsl")
+file(GLOB ShaderInc "include/*.hlsli")
+
+set(shader_output_dir "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Shaders/")
+file(MAKE_DIRECTORY ${shader_output_dir})
+
+set_source_files_properties(${ShaderSrc} PROPERTIES VS_TOOL_OVERRIDE "None") 
+set_source_files_properties(${ShaderInc} PROPERTIES VS_TOOL_OVERRIDE "None") 
+
+add_custom_target(${project} 
+    DEPENDS dxc
+    SOURCES ${ShaderSrc} ${ShaderInc})
+
+# On Windows - DXC are part of WindowsSDK and there's also DXC in VulkanSDK which supports SPIR-V
+if (DEFINED CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)
+    set (WINDOWS_SDK_VERSION ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION})
+elseif (DEFINED ENV{WindowsSDKLibVersion})
+    string (REGEX REPLACE "\\\\$" "" WINDOWS_SDK_VERSION "$ENV{WindowsSDKLibVersion}")
+else ()
+    message (FATAL_ERROR "WindowsSDK is not installed (CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION is not defined; WindowsSDKLibVersion is '$ENV{WindowsSDKLibVersion}')!")
+endif ()
+
+get_filename_component (WINDOWS_SDK_ROOT "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot10]" ABSOLUTE)
+set (WINDOWS_SDK_BIN "${WINDOWS_SDK_ROOT}/bin/${WINDOWS_SDK_VERSION}/x64")
+find_program (dxc_path "${WINDOWS_SDK_BIN}/dxc")
+if(NOT dxc_path)
+    message(FATAL_ERROR "dxc not found")
+else()
+    message(STATUS "dxc found at ${dxc_path}")
+endif()
+
+find_program (dxc_spirv_path "$ENV{VULKAN_SDK}/Bin/dxc")
+if(NOT dxc_spirv_path AND USE_VULKAN)
+    message(FATAL_ERROR "dxc_spirv not found")
+else()
+    message(STATUS "dxc_spirv found at ${dxc_spirv_path}")
+endif()
+
+foreach(shader ${ShaderSrc})
+    message(STATUS "shader: ${shader}")
+    get_filename_component(shader_name ${shader} NAME_WLE)  # 获取shader的名
+    get_filename_component(shader_ext ${shader} EXT)        # 获取shader的拓展名
+    get_filename_component(shader_dir ${shader} DIRECTORY)   # 获取shader的目录
+    # message(STATUS "shader_ext: ${shader_ext}")
+    string(REPLACE "." ";" shader_ext_list ${shader_ext})
+    list(GET shader_ext_list 1 shader_type)
+    # message(STATUS "shader_type: ${shader_type}")
+
+    if(USE_VULKAN)
+        set(shader_output "${shader_output_dir}${shader_name}.spv")
+        # compile shader to spirv
+        if("${shader_type}" STREQUAL "lib")
+            set(shader_command ${dxc_spirv_path} -spirv  -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi)
+        elseif("${shader_type}" STREQUAL "rgen")
+            set(shader_command ${dxc_spirv_path} -spirv -T lib_6_5 -Fo ${shader_output} -E main ${shader} -Od -Zi -fspv-target-env=vulkan1.1spirv1.4 -fspv-extension=SPV_KHR_ray_tracing -fspv-extension=SPV_KHR_ray_query -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0)
+        elseif("${shader_type}" STREQUAL "rmis")
+            set(shader_command ${dxc_spirv_path} -spirv -T lib_6_5 -Fo ${shader_output} -E main ${shader} -Od -Zi -fspv-target-env=vulkan1.1spirv1.4 -fspv-extension=SPV_KHR_ray_tracing -fspv-extension=SPV_KHR_ray_query -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0)
+        elseif("${shader_type}" STREQUAL "rchit")
+            set(shader_command ${dxc_spirv_path} -spirv -T lib_6_5 -Fo ${shader_output} -E main ${shader} -Od -Zi -fspv-target-env=vulkan1.1spirv1.4 -fspv-extension=SPV_KHR_ray_tracing -fspv-extension=SPV_KHR_ray_query -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0)
+        elseif("${shader_type}" STREQUAL "ms")
+            set(shader_command ${dxc_spirv_path} -spirv  -T ms_6_5 -Fo ${shader_output} -E main ${shader} -Od -Zi -fspv-target-env=vulkan1.1spirv1.4 -fspv-extension=SPV_EXT_mesh_shader -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0)
+        else()
+            set(shader_command  ${dxc_spirv_path} -spirv -T ${shader_type}_6_5 -Fo ${shader_output} -E main ${shader} -Od -Zi -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0) 
+        endif()
+    else()
+        set(shader_output "${shader_output_dir}${shader_name}.bin")
+        set(shader_pdb_output "${shader_output_dir}${shader_name}.pdb")
+        # compile shader to dxil
+        if("${shader_type}" STREQUAL "lib")
+            set(shader_command ${dxc_path} -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -Qembed_debug) 
+        elseif("${shader_type}" STREQUAL "rgen")
+            set(shader_command ${dxc_path} -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -Qembed_debug)
+        elseif("${shader_type}" STREQUAL "rmis")
+            set(shader_command ${dxc_path} -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -Qembed_debug)
+        elseif("${shader_type}" STREQUAL "rchit")
+            set(shader_command ${dxc_path} -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -Qembed_debug)
+        else()
+            # set(shader_command ${dxc_path} -T ${shader_type}_6_5 -Fo ${shader_output} -Fd ${shader_pdb_output} -E main -Od -Zi ${shader} -Qembed_debug)
+            set(shader_command ${dxc_path} -T ${shader_type}_6_5 -Fo ${shader_output} -E main -Od -Zi ${shader} -Qembed_debug)
+        endif()
+
+    endif()
+
+    add_custom_command(
+        TARGET ${project}
+        PRE_BUILD COMMAND ${shader_command}
+    )
+
+endforeach()
