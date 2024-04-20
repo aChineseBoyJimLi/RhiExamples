@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <chrono>
 
+#include "Log.h"
+
 Win32Base::Win32Base(uint32_t inWidth, uint32_t inHeight, HINSTANCE inHInstance, const char* inTitle)
         : m_Width(inWidth)
         , m_Height(inHeight)
@@ -53,7 +55,12 @@ Win32Base::~Win32Base()
 
 void Win32Base::Run()
 {
-    InitApp();
+    if(!Init())
+    {
+        Shutdown();
+        Log::Fatal("Failed to initialize application");
+        return;
+    }
 
     ShowWindow(m_hWnd, SW_NORMAL);
     UpdateWindow(m_hWnd);
@@ -75,7 +82,7 @@ void Win32Base::Run()
         Tick(deltaTime);
     }
     
-    Cleanup();
+    Shutdown();
 }
 
 std::list<Win32Base*> Win32Base::s_Listeners;

@@ -1,4 +1,4 @@
-#include "Include/Unlit.hlsli"
+#include "Passes/UnlitPass.hlsl"
 
 float4 main(VertexOutput input) : SV_Target
 {

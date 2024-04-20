@@ -12,9 +12,9 @@ public:
     virtual ~Win32Base();
 
 protected:
-    virtual void InitApp() = 0;
+    virtual bool Init() = 0;
     virtual void Tick(float DeltaTime) = 0;
-    virtual void Cleanup() = 0;
+    virtual void Shutdown() = 0;
     
     virtual void OnResize(int InWidth, int InHeight){ }
     virtual void OnMouseLeftBtnDown(int x, int y){ }

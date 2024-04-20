@@ -1,4 +1,4 @@
-#include "Include/Unlit.hlsli"
+#include "Passes/UnlitPass.hlsl"
 
 VertexOutput main(VertexInput input)
 {
