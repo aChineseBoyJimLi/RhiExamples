@@ -20,11 +20,12 @@ struct VertexOutput
 
 ConstantBuffer<TransformData>   _TransformData          : register(b0);
 ConstantBuffer<CameraData>      _CameraData             : register(b1);
-StructuredBuffer<VertexInput>   _Vertices               : register(t0);
-StructuredBuffer<Meshlet>       _Meshlets               : register(t1);
-StructuredBuffer<uint>          _PackedPrimitiveIndices : register(t2);
-StructuredBuffer<uint>          _UniqueVertexIndices    : register(t3);
-Texture2D                       _MainTex                : register(t4);
+StructuredBuffer<float3>        _Vertices               : register(t0);
+StructuredBuffer<float2>        _TexCoords              : register(t1);
+StructuredBuffer<Meshlet>       _Meshlets               : register(t2);
+StructuredBuffer<uint>          _PackedPrimitiveIndices : register(t3);
+StructuredBuffer<uint>          _UniqueVertexIndices    : register(t4);
+Texture2D                       _MainTex                : register(t5);
 SamplerState                    _MainTex_Sampler        : register(s0);
 
 uint3 GetPrimitive(Meshlet m, uint index)
@@ -40,11 +41,10 @@ uint GetVertexIndex(Meshlet m, uint localIndex)
 
 VertexOutput GetVertexAttributes(uint meshletIndex, uint vertexIndex)
 {
-    VertexInput input = _Vertices[vertexIndex];
     VertexOutput output;
-    float3 posWS = TransformLocalToWorld(_TransformData, input.Position);
+    float3 posWS = TransformLocalToWorld(_TransformData, _Vertices[vertexIndex]);
     output.Position = mul(_CameraData.ViewProjection, float4(posWS, 1.0f));
-    output.TexCoord = input.TexCoord;
+    output.TexCoord = _TexCoords[vertexIndex];
     output.Color = float4(meshletIndex / 16.0f, meshletIndex / 16.0f, meshletIndex / 16.0f, 1);
     return output;
 }

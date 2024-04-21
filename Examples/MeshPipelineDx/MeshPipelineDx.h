@@ -9,6 +9,8 @@
 #include <iostream>
 
 #include "AssetsManager.h"
+#include "Camera.h"
+#include "Transform.h"
 
 #define OUTPUT_D3D12_FAILED_RESULT(Re)  if(FAILED(Re))\
     {\
@@ -20,10 +22,10 @@ class MeshPipelineDx : public Win32Base
 {
 public:
     using Win32Base::Win32Base;
-    static constexpr D3D_FEATURE_LEVEL s_FeatureLevel = D3D_FEATURE_LEVEL_12_1;
-    static constexpr uint32_t s_BackBufferCount = 2;
-    static constexpr DXGI_FORMAT s_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-    static constexpr DXGI_FORMAT s_DepthStencilBufferFormat = DXGI_FORMAT_D32_FLOAT;
+    static constexpr D3D_FEATURE_LEVEL  s_FeatureLevel = D3D_FEATURE_LEVEL_12_1;
+    static constexpr DXGI_FORMAT        s_BackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+    static constexpr DXGI_FORMAT        s_DepthStencilBufferFormat = DXGI_FORMAT_D32_FLOAT;
+    static constexpr uint32_t           s_BackBufferCount = 2;
 
     bool Init() override;
     void Tick(float DeltaTime) override;
@@ -36,7 +38,8 @@ public:
     static uint32_t GetNodeMask() { return 0; }
     static uint32_t GetCreationNodeMask() { return 1; }
     static uint32_t GetVisibleNodeMask() { return 1; }
-    
+
+private:
     bool CreateDevice();
     void DestroyDevice();
     bool CreateCommandQueue();
@@ -85,21 +88,26 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_DepthStencilBuffer;
     D3D12_CPU_DESCRIPTOR_HANDLE                     m_DsvHandle;
 
+    Transform                                       m_MeshTransform;
     std::shared_ptr<AssetsManager::Mesh>            m_Mesh;
+    std::shared_ptr<AssetsManager::Texture>         m_Texture;
+    // Camera                                          m_Camera;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_TransformDataBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_CameraDataBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_VertexBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_VerticesBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>          m_TexCoordsBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_MeshletDataBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_PackedPrimitiveIndicesBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_UniqueVertexIndicesBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_MainTexture;
 
-    uint32_t m_ShaderBoundDescriptorSlot0;  // Transform Data CBV 
-    uint32_t m_ShaderBoundDescriptorSlot1;  // Camera Data CBV
-    uint32_t m_ShaderBoundDescriptorSlot2;  // Vertex Buffer SRV
-    uint32_t m_ShaderBoundDescriptorSlot3;  // Meshlet Data SRV
-    uint32_t m_ShaderBoundDescriptorSlot4;  // Packed Primitive Indices SRV
-    uint32_t m_ShaderBoundDescriptorSlot5;  // Unique Vertex Indices SRV
-    uint32_t m_ShaderBoundDescriptorSlot6;  // Main Texture SRV
-    uint32_t m_SamplerDescriptorSlot;       // Sampler
+    const uint32_t m_ShaderBoundDescriptorSlot0 {0};  // The slot of transform data CBV in the descriptor heap 
+    const uint32_t m_ShaderBoundDescriptorSlot1 {1};  // The slot of camera data CBV
+    const uint32_t m_ShaderBoundDescriptorSlot2 {2};  // The slot of vertices buffer SRV
+    const uint32_t m_ShaderBoundDescriptorSlot3 {3};  // The slot of texCoords buffer SRV
+    const uint32_t m_ShaderBoundDescriptorSlot4 {4};  // The slot of meshlets data SRV
+    const uint32_t m_ShaderBoundDescriptorSlot5 {5};  // The slot of packed Primitive Indices SRV
+    const uint32_t m_ShaderBoundDescriptorSlot6 {6};  // The slot of unique vertex indices SRV
+    const uint32_t m_ShaderBoundDescriptorSlot7 {7};  // The slot of main texture SRV
+    const uint32_t m_SamplerDescriptorSlot {0};       // The slot of sampler
 };

@@ -1,10 +1,10 @@
 #include "AssetsManager.h"
 
-
 namespace AssetsManager
 {
     static std::filesystem::path s_ShaderPath = std::filesystem::current_path() / ".." / "Shaders";
     static std::filesystem::path s_ModelPath = std::filesystem::current_path() / ".." / ".." / "Assets" / "Models";
+    static std::filesystem::path s_TexturePath = std::filesystem::current_path() / ".." / ".." / "Assets" / "Textures";
     
     bool Blob::ReadBinaryFile(const std::filesystem::path& path)
     {
@@ -76,7 +76,7 @@ namespace AssetsManager
 
     bool Mesh::ComputeMeshlets(std::vector<DirectX::Meshlet>& outMeshlets
             , std::vector<uint8_t>& outUniqueVertexIndices
-            , std::vector<DirectX::MeshletTriangle>& primitiveIndices) const
+            , std::vector<DirectX::MeshletTriangle>& outPackedPrimitiveIndices) const
     {
         if(m_Mesh == nullptr || m_Mesh->mNumVertices == 0 || m_Mesh->mNumFaces == 0)
         {
@@ -107,7 +107,7 @@ namespace AssetsManager
             , nullptr
             , outMeshlets
             , outUniqueVertexIndices
-            , primitiveIndices);
+            , outPackedPrimitiveIndices);
 
         if(FAILED(hr))
         {
@@ -138,6 +138,14 @@ namespace AssetsManager
             return nullptr;
         }
         return mesh;
+    }
+
+    std::shared_ptr<Texture> LoadTextureImmediately(const char* inTextureName)
+    {
+        const std::filesystem::path path = s_TexturePath / inTextureName;
+        std::shared_ptr<Texture> texture = std::make_shared<Texture>();
+
+        return texture;
     }
 
     void ChangeShaderPath(const char* inPath)

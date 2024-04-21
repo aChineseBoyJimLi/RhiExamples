@@ -5,17 +5,18 @@ bool MeshPipelineDx::CreateRootSignature()
 {
     Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
     Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
-    std::array<CD3DX12_ROOT_PARAMETER, 8> rootParameters;
+    std::array<CD3DX12_ROOT_PARAMETER, 9> rootParameters;
     rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_MESH);
     rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_MESH);
     rootParameters[2].InitAsShaderResourceView(0, 0, D3D12_SHADER_VISIBILITY_MESH);
     rootParameters[3].InitAsShaderResourceView(1, 0, D3D12_SHADER_VISIBILITY_MESH);
     rootParameters[4].InitAsShaderResourceView(2, 0, D3D12_SHADER_VISIBILITY_MESH);
     rootParameters[5].InitAsShaderResourceView(3, 0, D3D12_SHADER_VISIBILITY_MESH);
-    CD3DX12_DESCRIPTOR_RANGE descriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 4);
-    rootParameters[6].InitAsDescriptorTable(1, &descriptorRange1, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[6].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_MESH);
+    CD3DX12_DESCRIPTOR_RANGE descriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);
+    rootParameters[7].InitAsDescriptorTable(1, &descriptorRange1, D3D12_SHADER_VISIBILITY_PIXEL);
     CD3DX12_DESCRIPTOR_RANGE descriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
-    rootParameters[7].InitAsDescriptorTable(1, &descriptorRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[8].InitAsDescriptorTable(1, &descriptorRange, D3D12_SHADER_VISIBILITY_PIXEL);
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Init(static_cast<uint32_t>(rootParameters.size()), rootParameters.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
 

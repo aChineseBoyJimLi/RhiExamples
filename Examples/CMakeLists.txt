@@ -1,3 +1,4 @@
+add_subdirectory(ConsoleTest)
 # add_subdirectory(GpuQueryDx)
 # add_subdirectory(GpuQueryVk)
 add_subdirectory(MeshPipelineDx)

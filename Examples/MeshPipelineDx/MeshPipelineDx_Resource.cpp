@@ -141,12 +141,79 @@ bool MeshPipelineDx::CreateResources()
         Log::Error("Failed to load mesh");
         return false;
     }
+
+    m_Texture = AssetsManager::LoadTextureImmediately("checkerboard.png");
+    
+
+    std::vector<DirectX::Meshlet> meshlets;
+    std::vector<uint8_t> uniqueVertexIndices;
+    std::vector<DirectX::MeshletTriangle> packedPrimitiveIndices;
+
+    if(!m_Mesh->ComputeMeshlets(meshlets, uniqueVertexIndices, packedPrimitiveIndices))
+        return false;
+
+    m_TransformDataBuffer = CreateBufferHelper(m_DeviceHandle.Get()
+        , sizeof(TransformData)
+        , D3D12_RESOURCE_STATE_GENERIC_READ
+        , D3D12_HEAP_TYPE_UPLOAD
+        , D3D12_RESOURCE_FLAG_NONE);
+
+    m_CameraDataBuffer = CreateBufferHelper(m_DeviceHandle.Get()
+        , sizeof(CameraData)
+        , D3D12_RESOURCE_STATE_GENERIC_READ
+        , D3D12_HEAP_TYPE_UPLOAD
+        , D3D12_RESOURCE_FLAG_NONE);
+    
+    m_VerticesBuffer = CreateBufferHelper(m_DeviceHandle.Get()
+        , (uint32_t)m_Mesh->GetVertexCount() * sizeof(DirectX::XMFLOAT3)
+        , D3D12_RESOURCE_STATE_COPY_DEST
+        , D3D12_HEAP_TYPE_DEFAULT
+        , D3D12_RESOURCE_FLAG_NONE);
+
+    m_TexCoordsBuffer = CreateBufferHelper(m_DeviceHandle.Get()
+        , (uint32_t)m_Mesh->GetVertexCount() * sizeof(DirectX::XMFLOAT2)
+        , D3D12_RESOURCE_STATE_COPY_DEST
+        , D3D12_HEAP_TYPE_DEFAULT
+        , D3D12_RESOURCE_FLAG_NONE);
+
+    m_MeshletDataBuffer = CreateBufferHelper(m_DeviceHandle.Get()
+        , (uint32_t)meshlets.size() * sizeof(DirectX::Meshlet)
+        , D3D12_RESOURCE_STATE_COPY_DEST
+        , D3D12_HEAP_TYPE_DEFAULT
+        , D3D12_RESOURCE_FLAG_NONE);
+
+    m_PackedPrimitiveIndicesBuffer = CreateBufferHelper(m_DeviceHandle.Get()
+        , (uint32_t)packedPrimitiveIndices.size() * sizeof(DirectX::MeshletTriangle)
+        , D3D12_RESOURCE_STATE_COPY_DEST
+        , D3D12_HEAP_TYPE_DEFAULT
+        , D3D12_RESOURCE_FLAG_NONE);
+
+    m_UniqueVertexIndicesBuffer = CreateBufferHelper(m_DeviceHandle.Get()
+        , (uint32_t)uniqueVertexIndices.size() * sizeof(uint8_t)
+        , D3D12_RESOURCE_STATE_COPY_DEST
+        , D3D12_HEAP_TYPE_DEFAULT
+        , D3D12_RESOURCE_FLAG_NONE);
+
+    const AssetsManager::TextureDesc& textureDesc = m_Texture->GetTextureDesc();
+    // m_MainTexture = CreateTextureHelper(m_DeviceHandle.Get()
+    //     , s_MainTextureFormat
+    //     , textureDesc.Width
+    //     , textureDesc.Height
+    //     , D3D12_RESOURCE_STATE_COPY_DEST
+    //     , D3D12_HEAP_TYPE_DEFAULT
+    //     , D3D12_RESOURCE_FLAG_NONE
+    //     , nullptr);
     
     return true;
 }
 
 void MeshPipelineDx::DestroyResources()
 {
+    m_UniqueVertexIndicesBuffer.Reset();
+    m_PackedPrimitiveIndicesBuffer.Reset();
+    m_MeshletDataBuffer.Reset();
+    m_TexCoordsBuffer.Reset();
+    m_VerticesBuffer.Reset();
     
     m_Mesh.reset();
 }

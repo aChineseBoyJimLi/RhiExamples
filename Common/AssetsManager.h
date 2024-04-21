@@ -7,6 +7,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "DirectXMesh.h"
+#include "Enum.h"
 #include "Log.h"
 
 namespace AssetsManager
@@ -42,21 +43,39 @@ namespace AssetsManager
         uint32_t GetPrimCount() const { return m_Mesh ? m_Mesh->mNumFaces : 0; }
         const aiMesh* GetMesh() const { return m_Mesh; }
         aiMesh* GetMesh() { return m_Mesh; }
-
-        bool ComputeMeshlets(std::vector<DirectX::Meshlet>& outMeshlets
-            , std::vector<uint8_t>& outUniqueVertexIndices
-            , std::vector<DirectX::MeshletTriangle>& primitiveIndices) const;
-        
         bool ReadMesh(const std::filesystem::path& inPath);
         void Release();
+        bool ComputeMeshlets(std::vector<DirectX::Meshlet>& outMeshlets
+            , std::vector<uint8_t>& outUniqueVertexIndices
+            , std::vector<DirectX::MeshletTriangle>& outPackedPrimitiveIndices) const;
         
     private:
         Assimp::Importer m_Importer;
         aiMesh* m_Mesh;
     };
+
+    struct TextureDesc
+    {
+        uint32_t Width;
+        uint32_t Height;
+        uint32_t Depth;
+        uint32_t ArraySize;
+        uint32_t MipLevels;
+        EFormat  Format;
+    };
+
+    class Texture
+    {
+    public:
+        const TextureDesc& GetTextureDesc() const { return m_TextureDesc; }
+        void Release();
+    private:
+        TextureDesc m_TextureDesc;
+    };
     
     std::shared_ptr<Blob>           LoadShaderImmediately(const char* inShaderName);
     std::shared_ptr<Mesh>           LoadMeshImmediately(const char* inMeshName);
+    std::shared_ptr<Texture>        LoadTextureImmediately(const char* inTextureName);
     
     void                            ChangeShaderPath(const char* inPath);
     const std::filesystem::path&    GetShaderPath();
