@@ -9,28 +9,28 @@ struct TransformData
 
 inline float3 TransformLocalToWorld(in TransformData Data, in float3 Pos)
 {
-    return mul(Data.LocalToWorld, float4(Pos, 1.0f)).xyz;
+    return mul(float4(Pos, 1.0f), Data.LocalToWorld).xyz;
 }
 
 inline float3 TransformWorldToLocal(in TransformData Data, in float3 Pos)
 {
-    return mul(Data.WorldToLocal, float4(Pos, 1.0f)).xyz;
+    return mul(float4(Pos, 1.0f), Data.WorldToLocal).xyz;
 }
 
 inline float3 TransformLocalToWorldDir( in TransformData Data, in float3 Dir )
 {
-    return normalize(mul((float3x3)Data.LocalToWorld, Dir));
+    return normalize(mul(Dir, (float3x3)Data.LocalToWorld));
 }
 
 inline float3 TransformWorldToLocalDir( in TransformData Data, in float3 Dir )
 {
-    return normalize(mul((float3x3)Data.WorldToLocal, Dir));
+    return normalize(mul(Dir, (float3x3)Data.WorldToLocal));
 }
 
 // Normal need to be multiply by inverse transpose of LocalToWorld
 inline float3 TransformLocalToWorldNormal( in TransformData Data, in float3 Norm )
 {
-    return normalize(mul(Norm, (float3x3)Data.WorldToLocal));
+    return normalize(mul((float3x3)Data.WorldToLocal, Norm));
 }
 
 void CreateTangentToWorldBasis( in TransformData Data, in float3 Normal, in half4 Tangent, out half3 NormalWS, out half3 TangentWS, out half3 BinormalWS )

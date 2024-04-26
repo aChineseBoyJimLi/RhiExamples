@@ -66,20 +66,26 @@ void Win32Base::Run()
     UpdateWindow(m_hWnd);
 
     // Main Loop
+    auto lastTime = std::chrono::high_resolution_clock::now();
     auto startTime = std::chrono::high_resolution_clock::now();
+    m_IsRunning = true;
     MSG Msg = { 0 };
-    while (true)
+    while (m_IsRunning)
     {
         if (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE))
         {
-            if (Msg.message == WM_QUIT) break;
+            if (Msg.message == WM_QUIT)
+            {
+                m_IsRunning = false;
+            }
             TranslateMessage(&Msg);
             DispatchMessageW(&Msg);
         }
         auto currentTime = std::chrono::high_resolution_clock::now();
-        float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-        startTime = currentTime;
-        Tick(deltaTime);
+        m_Timer.DeltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastTime).count();
+        m_Timer.TotalTimeSinceStart = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        lastTime = currentTime;
+        Tick();
     }
     
     Shutdown();

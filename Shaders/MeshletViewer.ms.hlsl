@@ -11,7 +11,7 @@ void main(
 {
     Meshlet m = _Meshlets[gid];
     SetMeshOutputCounts(m.VertCount, m.PrimCount);
-    if(gid < m.PrimCount)
+    if(gtid < m.PrimCount)
     {
         tris[gtid] = GetPrimitive(m, gtid);
     }

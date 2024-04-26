@@ -7,7 +7,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "DirectXMesh.h"
-#include "Enum.h"
+#include "DirectXTex.h"
 #include "Log.h"
 
 namespace AssetsManager
@@ -22,14 +22,14 @@ namespace AssetsManager
         Blob& operator=(const Blob&) = delete;
         Blob& operator=(Blob&&) = delete;
 
-        const char*     GetData() const { return m_Data; }
+        const uint8_t*  GetData() const { return m_Data; }
         size_t          GetSize() const { return m_Size; }
         bool            IsEmpty() const { return m_Data == nullptr || m_Size == 0; }
         bool            ReadBinaryFile(const std::filesystem::path& path);
         void            Release();  
 
     private:
-        char* m_Data;
+        uint8_t* m_Data;
         size_t m_Size;
     };
 
@@ -39,43 +39,60 @@ namespace AssetsManager
         Mesh() : m_Mesh(nullptr) {}
         ~Mesh() { Release(); }
 
-        uint32_t GetVertexCount() const { return m_Mesh ? m_Mesh->mNumVertices : 0; }
-        uint32_t GetPrimCount() const { return m_Mesh ? m_Mesh->mNumFaces : 0; }
-        const aiMesh* GetMesh() const { return m_Mesh; }
-        aiMesh* GetMesh() { return m_Mesh; }
-        bool ReadMesh(const std::filesystem::path& inPath);
-        void Release();
-        bool ComputeMeshlets(std::vector<DirectX::Meshlet>& outMeshlets
-            , std::vector<uint8_t>& outUniqueVertexIndices
-            , std::vector<DirectX::MeshletTriangle>& outPackedPrimitiveIndices) const;
+        uint32_t        GetVertexCount() const { return m_Mesh ? m_Mesh->mNumVertices : 0; }
+        uint32_t        GetPrimCount() const { return m_Mesh ? m_Mesh->mNumFaces : 0; }
+        uint32_t        GetIndicesCount() const { return (uint32_t)m_Indices.size(); }
+        const aiMesh*   GetMesh() const { return m_Mesh; }
+        aiMesh*         GetMesh() { return m_Mesh; }
+        bool            ReadMesh(const std::filesystem::path& inPath);
+        void            Release();
+        bool            ComputeMeshlets(std::vector<DirectX::Meshlet>& outMeshlets
+                            , std::vector<uint8_t>& outUniqueVertexIndices
+                            , std::vector<DirectX::MeshletTriangle>& outPackedPrimitiveIndices) const;
+
+        const void*     GetPositionData() const { return m_Mesh ? m_Mesh->mVertices : nullptr; }
+        size_t          GetPositionDataByteSize() const { return m_Mesh ? m_Mesh->mNumVertices * sizeof(aiVector3D) : 0; }
+        const void*     GetTexCoordData() const {return m_Mesh && m_Mesh->HasTextureCoords(0) ? m_Mesh->mTextureCoords[0] : nullptr; }
+        size_t          GetTexCoordDataByteSize() const { return m_Mesh ? m_Mesh->mNumVertices * sizeof(aiVector3D) : 0; }
+        const void*     GetIndicesData() const { return m_Mesh ? m_Indices.data() : nullptr; }
+        size_t          GetIndicesDataByteSize() const { return m_Mesh ? m_Indices.size() * sizeof(uint32_t) : 0; }
+        const void*     GetNormalData() const { return m_Mesh && m_Mesh->HasNormals() ? m_Mesh->mNormals : nullptr; }
+        size_t          GetNormalDataByteSize() const { return m_Mesh ? m_Mesh->mNumVertices * sizeof(aiVector3D) : 0; }
         
     private:
         Assimp::Importer m_Importer;
         aiMesh* m_Mesh;
+        std::vector<uint32_t> m_Indices;
     };
 
-    struct TextureDesc
+    struct TextureSubresourceData
     {
-        uint32_t Width;
-        uint32_t Height;
-        uint32_t Depth;
-        uint32_t ArraySize;
-        uint32_t MipLevels;
-        EFormat  Format;
+        uint32_t RowPitch = 0;
+        uint32_t DepthPitch = 0;
+        uint32_t DataOffset = 0;
+        uint32_t DataSize = 0;
     };
 
     class Texture
     {
     public:
-        const TextureDesc& GetTextureDesc() const { return m_TextureDesc; }
+        Texture(bool sRGB);
+        ~Texture() { Release(); }
+        const DirectX::TexMetadata& GetTextureDesc() const { return m_ScratchImage.GetMetadata(); }
+        const DirectX::ScratchImage& GetScratchImage() const { return m_ScratchImage; }
+
+        bool ReadTexture(const std::filesystem::path& path);
         void Release();
+        
     private:
-        TextureDesc m_TextureDesc;
+        DirectX::ScratchImage m_ScratchImage;
+        DirectX::TexMetadata m_Metadata;
+        bool m_sRGB;
     };
     
     std::shared_ptr<Blob>           LoadShaderImmediately(const char* inShaderName);
     std::shared_ptr<Mesh>           LoadMeshImmediately(const char* inMeshName);
-    std::shared_ptr<Texture>        LoadTextureImmediately(const char* inTextureName);
+    std::shared_ptr<Texture>        LoadTextureImmediately(const char* inTextureName, bool sRGB = false);
     
     void                            ChangeShaderPath(const char* inPath);
     const std::filesystem::path&    GetShaderPath();

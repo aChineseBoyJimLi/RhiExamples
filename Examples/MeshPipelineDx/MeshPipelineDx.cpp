@@ -49,16 +49,7 @@ bool MeshPipelineDx::Init()
 
 void MeshPipelineDx::Shutdown()
 {
-    DestroyResources();
-    DestroyDepthStencilBuffer();
-    DestroyPipelineState();
-    DestroyShader();
-    DestroyRootSignature();
-    DestroySwapChain();
-    DestroyDescriptorHeaps();
-    DestroyCommandList();
-    DestroyCommandQueue();
-    DestroyDevice();
+    FlushCommandQueue();
 }
 
 bool MeshPipelineDx::CreateDevice()
@@ -112,20 +103,13 @@ bool MeshPipelineDx::CreateDevice()
         }
     }
 
-    if(m_DeviceHandle == nullptr)
+    if(m_DeviceHandle.Get() == nullptr)
     {
         Log::Error("Failed to find a device supporting Mesh Shaders");
         return false;
     }
     
     return true;
-}
-
-void MeshPipelineDx::DestroyDevice()
-{
-    m_DeviceHandle.Reset();
-    m_AdapterHandle.Reset();
-    m_FactoryHandle.Reset();
 }
 
 bool MeshPipelineDx::CreateCommandQueue()
@@ -142,14 +126,15 @@ bool MeshPipelineDx::CreateCommandQueue()
         Log::Error("[D3D12] Failed to create the command queue");
         return false;
     }
+    
+    hr = m_DeviceHandle->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence));
+    if(FAILED(hr))
+    {
+        OUTPUT_D3D12_FAILED_RESULT(hr)
+        Log::Error("[D3D12] Failed to create the fence");
+        return false;
+    }
     return true;
-}
-
-void MeshPipelineDx::DestroyCommandQueue()
-{   
-    const auto refCount = m_CommandQueueHandle.Reset();
-    if(refCount > 0)
-        Log::Warning("[D3D12] Command Queue is still in use");
 }
 
 bool MeshPipelineDx::CreateCommandList()
@@ -173,19 +158,13 @@ bool MeshPipelineDx::CreateCommandList()
     return true;
 }
 
-void MeshPipelineDx::DestroyCommandList()
-{
-    m_CommandList.Reset();
-    m_CommandAllocator.Reset();
-}
-
 void MeshPipelineDx::BeginCommandList()
 {
     if(m_CommandList == nullptr)
         return;
     if(m_CommandListIsClosed)
     {
-        m_CommandAllocator.Reset();
+        m_CommandAllocator->Reset();
         m_CommandList->Reset(m_CommandAllocator.Get(), nullptr);
         m_CommandListIsClosed = false;
     }
@@ -230,7 +209,7 @@ bool MeshPipelineDx::CreateDescriptorHeaps()
 
     D3D12_DESCRIPTOR_HEAP_DESC shaderBoundViewHeapDesc{};
     shaderBoundViewHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    shaderBoundViewHeapDesc.NumDescriptors = 1024;
+    shaderBoundViewHeapDesc.NumDescriptors = 8;
     shaderBoundViewHeapDesc.NodeMask = GetNodeMask();
     shaderBoundViewHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     hr = m_DeviceHandle->CreateDescriptorHeap(&shaderBoundViewHeapDesc, IID_PPV_ARGS(&m_ShaderBoundViewHeap));
@@ -243,7 +222,7 @@ bool MeshPipelineDx::CreateDescriptorHeaps()
 
     D3D12_DESCRIPTOR_HEAP_DESC samplerHeapDesc{};
     samplerHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
-    samplerHeapDesc.NumDescriptors = 1024;
+    samplerHeapDesc.NumDescriptors = 8;
     samplerHeapDesc.NodeMask = GetNodeMask();
     samplerHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     hr = m_DeviceHandle->CreateDescriptorHeap(&samplerHeapDesc, IID_PPV_ARGS(&m_SamplerHeap));
@@ -255,25 +234,6 @@ bool MeshPipelineDx::CreateDescriptorHeaps()
     }
 
     return true;
-}
-
-void MeshPipelineDx::DestroyDescriptorHeaps()
-{
-    const auto refCount = m_RtvHeap.Reset();
-    if(refCount > 0)
-        Log::Warning("[D3D12] RTV Descriptor Heap is still in use");
-
-    const auto refCount1 = m_DsvHeap.Reset();
-    if(refCount1 > 0)
-        Log::Warning("[D3D12] DSV Descriptor Heap is still in use");
-
-    const auto refCount2 = m_ShaderBoundViewHeap.Reset();
-    if(refCount2 > 0)
-        Log::Warning("[D3D12] Shader Bound View Descriptor Heap is still in use");
-
-    const auto refCount3 = m_SamplerHeap.Reset();
-    if(refCount3 > 0)
-        Log::Warning("[D3D12] Sampler Descriptor Heap is still in use");    
 }
 
 bool MeshPipelineDx::CreateSwapChain()
@@ -307,6 +267,7 @@ bool MeshPipelineDx::CreateSwapChain()
 
     // Create the render target views
     m_RtvHandles.resize(s_BackBufferCount);
+    m_BackBuffers.resize(s_BackBufferCount);
     const uint32_t incrementSize = m_DeviceHandle->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     
     D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
@@ -325,7 +286,7 @@ bool MeshPipelineDx::CreateSwapChain()
             Log::Error("[D3D12] Failed to get the swap chain buffer");
             return false;
         }
-        
+        m_BackBuffers[i] = backBuffer;
         m_RtvHandles[i] = m_RtvHeap->GetCPUDescriptorHandleForHeapStart();
         m_RtvHandles[i].ptr += i * incrementSize;
         m_DeviceHandle->CreateRenderTargetView(backBuffer.Get(), &rtvDesc, m_RtvHandles[i]);
@@ -334,10 +295,22 @@ bool MeshPipelineDx::CreateSwapChain()
     return true;
 }
 
-void MeshPipelineDx::DestroySwapChain()
+void MeshPipelineDx::FlushCommandQueue()
 {
-    const auto refCount = m_SwapChainHandle.Reset();
-    if(refCount > 0)
-        Log::Warning("[D3D12] Swap Chain is still in use");
+    if(m_CommandQueueHandle.Get())
+    {
+        m_Fence->Signal(0);
+        uint64_t completeValue = 1;
+        m_CommandQueueHandle->Signal(m_Fence.Get(), completeValue);
+        if(m_Fence->GetCompletedValue() < completeValue)
+        {
+            HANDLE eventHandle = CreateEventEx(nullptr, "Wait For GPU", false, EVENT_ALL_ACCESS);
+            if(eventHandle != nullptr)
+            {
+                m_Fence->SetEventOnCompletion(completeValue, eventHandle);
+                WaitForSingleObject(eventHandle, INFINITE);
+                CloseHandle(eventHandle);
+            }
+        }
+    }
 }
-

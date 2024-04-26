@@ -13,9 +13,9 @@ bool MeshPipelineDx::CreateRootSignature()
     rootParameters[4].InitAsShaderResourceView(2, 0, D3D12_SHADER_VISIBILITY_MESH);
     rootParameters[5].InitAsShaderResourceView(3, 0, D3D12_SHADER_VISIBILITY_MESH);
     rootParameters[6].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_MESH);
-    CD3DX12_DESCRIPTOR_RANGE descriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5);
+    CD3DX12_DESCRIPTOR_RANGE descriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5, 0);
     rootParameters[7].InitAsDescriptorTable(1, &descriptorRange1, D3D12_SHADER_VISIBILITY_PIXEL);
-    CD3DX12_DESCRIPTOR_RANGE descriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
+    CD3DX12_DESCRIPTOR_RANGE descriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0, 0);
     rootParameters[8].InitAsDescriptorTable(1, &descriptorRange, D3D12_SHADER_VISIBILITY_PIXEL);
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Init(static_cast<uint32_t>(rootParameters.size()), rootParameters.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
@@ -43,12 +43,6 @@ bool MeshPipelineDx::CreateRootSignature()
     return true;
 }
 
-void MeshPipelineDx::DestroyRootSignature()
-{
-    const auto refCount = m_RootSignature.Reset();
-    if(refCount > 0)
-        Log::Warning("[D3D12] Root Signature is still in use");
-}
 
 bool MeshPipelineDx::CreateShader()
 {
@@ -58,19 +52,13 @@ bool MeshPipelineDx::CreateShader()
         Log::Error("Failed to load mesh shader");
         return false;
     }
-    m_PixelShaderBlob = AssetsManager::LoadShaderImmediately("MeshletViewer.ps.bin");
+    m_PixelShaderBlob = AssetsManager::LoadShaderImmediately("SolidColor.ps.bin");
     if(!m_PixelShaderBlob || m_PixelShaderBlob->IsEmpty())
     {
         Log::Error("Failed to load pixel shader");
         return false;
     }
     return true;
-}
-
-void MeshPipelineDx::DestroyShader()
-{
-    m_MeshShaderBlob.reset();
-    m_PixelShaderBlob.reset();
 }
 
 bool MeshPipelineDx::CreatePipelineState()
@@ -100,11 +88,4 @@ bool MeshPipelineDx::CreatePipelineState()
         return false;
     }
     return true;
-}
-
-void MeshPipelineDx::DestroyPipelineState()
-{
-    const auto refCount = m_PipelineState.Reset();
-    if(refCount > 0)
-        Log::Warning("[D3D12] Pipeline State is still in use");
 }

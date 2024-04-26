@@ -18,6 +18,23 @@
         Log::Error("[D3D12] Error: %s, In File: %s line %d", message.c_str(), __FILE__, __LINE__);\
     }
 
+void WriteBufferData(ID3D12Resource* inBuffer, const void* inData, uint32_t inSize);
+
+static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferHelper(ID3D12Device* inDevice
+    , size_t inSize
+    , D3D12_RESOURCE_STATES initState
+    , D3D12_HEAP_TYPE inHeapType
+    , D3D12_RESOURCE_FLAGS inFlags);
+
+Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureHelper(ID3D12Device* inDevice
+    , DXGI_FORMAT inFormat
+    , uint32_t inWidth
+    , uint32_t inHeight
+    , D3D12_RESOURCE_STATES initState
+    , D3D12_HEAP_TYPE inHeapType
+    , D3D12_RESOURCE_FLAGS inFlags
+    , const D3D12_CLEAR_VALUE* inClearValue);
+
 class MeshPipelineDx : public Win32Base
 {
 public:
@@ -28,48 +45,39 @@ public:
     static constexpr uint32_t           s_BackBufferCount = 2;
 
     bool Init() override;
-    void Tick(float DeltaTime) override;
+    void Tick() override;
     void Shutdown() override;
 
     void BeginCommandList();
     void EndCommandList();
     
-    // no mGPU support so far
+    // not support mGPU so far
     static uint32_t GetNodeMask() { return 0; }
     static uint32_t GetCreationNodeMask() { return 1; }
     static uint32_t GetVisibleNodeMask() { return 1; }
 
 private:
     bool CreateDevice();
-    void DestroyDevice();
     bool CreateCommandQueue();
-    void DestroyCommandQueue();
     bool CreateCommandList();
-    void DestroyCommandList();
     bool CreateDescriptorHeaps();
-    void DestroyDescriptorHeaps();
     bool CreateSwapChain();
-    void DestroySwapChain();
-
     bool CreateRootSignature();
-    void DestroyRootSignature();
     bool CreateShader();
-    void DestroyShader();
     bool CreatePipelineState();
-    void DestroyPipelineState();
-    
     bool CreateDepthStencilBuffer();
-    void DestroyDepthStencilBuffer();
     bool CreateResources();
-    void DestroyResources();
+    void UpdateConstants();
+    void FlushCommandQueue();
     
 private:
     Microsoft::WRL::ComPtr<IDXGIFactory2>               m_FactoryHandle;
     Microsoft::WRL::ComPtr<IDXGIAdapter1>               m_AdapterHandle;
     Microsoft::WRL::ComPtr<ID3D12Device5>               m_DeviceHandle;
     Microsoft::WRL::ComPtr<ID3D12CommandQueue>          m_CommandQueueHandle;
+    Microsoft::WRL::ComPtr<ID3D12Fence>                 m_Fence;
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator>      m_CommandAllocator;
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>  m_CommandList;
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6>  m_CommandList;
     bool                                                m_CommandListIsClosed = false;         
 
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_RtvHeap;
@@ -77,8 +85,10 @@ private:
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_ShaderBoundViewHeap; // CBV, SRV, UAV
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_SamplerHeap;
     
-    Microsoft::WRL::ComPtr<IDXGISwapChain1>         m_SwapChainHandle;
-    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>        m_RtvHandles;
+    Microsoft::WRL::ComPtr<IDXGISwapChain1>             m_SwapChainHandle;
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>            m_RtvHandles;
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_BackBuffers;
+    uint32_t                                            m_CurrentIndex{0};
 
     Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_RootSignature;
     std::shared_ptr<AssetsManager::Blob>            m_MeshShaderBlob;
@@ -88,10 +98,10 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_DepthStencilBuffer;
     D3D12_CPU_DESCRIPTOR_HANDLE                     m_DsvHandle;
 
-    Transform                                       m_MeshTransform;
+    CameraPerspective                               m_Camera;
     std::shared_ptr<AssetsManager::Mesh>            m_Mesh;
+    Transform                                       m_MeshTransform;
     std::shared_ptr<AssetsManager::Texture>         m_Texture;
-    // Camera                                          m_Camera;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_TransformDataBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_CameraDataBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_VerticesBuffer;
@@ -100,14 +110,8 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_PackedPrimitiveIndicesBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_UniqueVertexIndicesBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>          m_MainTexture;
+    uint32_t                                        m_GroupCount;
 
-    const uint32_t m_ShaderBoundDescriptorSlot0 {0};  // The slot of transform data CBV in the descriptor heap 
-    const uint32_t m_ShaderBoundDescriptorSlot1 {1};  // The slot of camera data CBV
-    const uint32_t m_ShaderBoundDescriptorSlot2 {2};  // The slot of vertices buffer SRV
-    const uint32_t m_ShaderBoundDescriptorSlot3 {3};  // The slot of texCoords buffer SRV
-    const uint32_t m_ShaderBoundDescriptorSlot4 {4};  // The slot of meshlets data SRV
-    const uint32_t m_ShaderBoundDescriptorSlot5 {5};  // The slot of packed Primitive Indices SRV
-    const uint32_t m_ShaderBoundDescriptorSlot6 {6};  // The slot of unique vertex indices SRV
-    const uint32_t m_ShaderBoundDescriptorSlot7 {7};  // The slot of main texture SRV
-    const uint32_t m_SamplerDescriptorSlot {0};       // The slot of sampler
+    const uint32_t m_MainTextureSrvSlot {0};       // The slot of main texture srv in the descriptor heap 
+    const uint32_t m_SamplerSlot {0};               // The slot of sampler in the descriptor heap 
 };
