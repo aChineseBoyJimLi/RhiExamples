@@ -80,37 +80,37 @@ private:
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList6>  m_CommandList;
     bool                                                m_CommandListIsClosed = false;         
 
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_RtvHeap;
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_DsvHeap;
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_ShaderBoundViewHeap; // CBV, SRV, UAV
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>    m_SamplerHeap;
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>        m_RtvHeap;
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>        m_DsvHeap;
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>        m_ShaderBoundViewHeap; // CBV, SRV, UAV
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>        m_SamplerHeap;
     
     Microsoft::WRL::ComPtr<IDXGISwapChain1>             m_SwapChainHandle;
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>            m_RtvHandles;
     std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_BackBuffers;
     uint32_t                                            m_CurrentIndex{0};
 
-    Microsoft::WRL::ComPtr<ID3D12RootSignature>     m_RootSignature;
-    std::shared_ptr<AssetsManager::Blob>            m_MeshShaderBlob;
-    std::shared_ptr<AssetsManager::Blob>            m_PixelShaderBlob;
-    Microsoft::WRL::ComPtr<ID3D12PipelineState>     m_PipelineState;
+    Microsoft::WRL::ComPtr<ID3D12RootSignature>         m_RootSignature;
+    std::shared_ptr<AssetsManager::Blob>                m_MeshShaderBlob;
+    std::shared_ptr<AssetsManager::Blob>                m_PixelShaderBlob;
+    Microsoft::WRL::ComPtr<ID3D12PipelineState>         m_PipelineState;
 
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_DepthStencilBuffer;
-    D3D12_CPU_DESCRIPTOR_HANDLE                     m_DsvHandle;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_DepthStencilBuffer;
+    D3D12_CPU_DESCRIPTOR_HANDLE                         m_DsvHandle;
 
-    CameraPerspective                               m_Camera;
-    std::shared_ptr<AssetsManager::Mesh>            m_Mesh;
-    Transform                                       m_MeshTransform;
-    std::shared_ptr<AssetsManager::Texture>         m_Texture;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_TransformDataBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_CameraDataBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_VerticesBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_TexCoordsBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_MeshletDataBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_PackedPrimitiveIndicesBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_UniqueVertexIndicesBuffer;
-    Microsoft::WRL::ComPtr<ID3D12Resource>          m_MainTexture;
-    uint32_t                                        m_GroupCount;
+    CameraPerspective                                   m_Camera;
+    std::shared_ptr<AssetsManager::Mesh>                m_Mesh;
+    Transform                                           m_MeshTransform;
+    std::shared_ptr<AssetsManager::Texture>             m_Texture;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_TransformDataBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_CameraDataBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_VerticesBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_TexCoordsBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_MeshletDataBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_PackedPrimitiveIndicesBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_UniqueVertexIndicesBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_MainTexture;
+    uint32_t                                            m_GroupCount;
 
     const uint32_t m_MainTextureSrvSlot {0};       // The slot of main texture srv in the descriptor heap 
     const uint32_t m_SamplerSlot {0};               // The slot of sampler in the descriptor heap 

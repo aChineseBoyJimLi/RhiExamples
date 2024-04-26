@@ -3,8 +3,17 @@
 [shader("closesthit")]
 void ClosestHitTriangle(inout Payload p : SV_RayPayloadin, TrianglePrimitiveAttributes attribs : SV_IntersectionAttributes)
 {
-    uint instanceIndex = InstanceIndex();
-    p.HitValue = float3(1.0, 1.0, 0.2);
+    uint3 indices = GetTriangleIndices(PrimitiveIndex());
+    float3 barycentrics = GetBarycentrics(attribs.UV);
+
+    float3 normal = GetNormal(indices, barycentrics);
+    float3 hitPositionWS = HitWorldPosition();
+
+    TransformData transformData = _MeshInstanceTransforms[InstanceIndex()];
+    float3 normalWS = TransformLocalToWorldNormal(transformData, normal);
+
+    float3 incident = normalize(-_LightData.LightDirection);
+    p.HitValue = _LightData.LightIntensity * _LightData.LightColor * saturate(dot(normalWS, incident));
 }
 
 // [shader("closesthit")]

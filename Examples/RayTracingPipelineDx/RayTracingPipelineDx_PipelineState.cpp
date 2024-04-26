@@ -7,7 +7,7 @@ bool RayTracingPipelineDx::CreateRootSignature()
     Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
     Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
     
-    std::array<CD3DX12_ROOT_PARAMETER, 8> globalRootParameters;
+    std::array<CD3DX12_ROOT_PARAMETER, 9> globalRootParameters;
     globalRootParameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL); // _CameraData
     globalRootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL); // _LightData
     globalRootParameters[2].InitAsShaderResourceView(0, 0, D3D12_SHADER_VISIBILITY_ALL); // _AccelStructure
@@ -17,6 +17,7 @@ bool RayTracingPipelineDx::CreateRootSignature()
     globalRootParameters[5].InitAsShaderResourceView(2, 0, D3D12_SHADER_VISIBILITY_ALL); // _Vertices
     globalRootParameters[6].InitAsShaderResourceView(3, 0, D3D12_SHADER_VISIBILITY_ALL); // _Texcoords
     globalRootParameters[7].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_ALL); // _Normals
+    globalRootParameters[8].InitAsShaderResourceView(5, 0, D3D12_SHADER_VISIBILITY_ALL); // _MeshInstanceTransforms
 
     CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc;
     globalRootSignatureDesc.Init(globalRootParameters.size()

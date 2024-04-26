@@ -70,6 +70,8 @@ public:
     glm::mat4 GetLocalToWorldMatrix() const;
     glm::mat4 GetParentToLocalMatrix() const;
     glm::mat4 GetWorldToLocalMatrix() const;
+
+    void GetLocalToWorld3x4(float transform[3][4]) const;
     
     void GetLocalToParentMatrix(glm::mat4& outMatrix) const;
     void GetLocalToWorldMatrix(glm::mat4& outMatrix) const;

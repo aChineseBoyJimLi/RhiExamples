@@ -170,7 +170,7 @@ bool MeshPipelineDx::CreateDepthStencilBuffer()
 bool MeshPipelineDx::CreateResources()
 {
     m_Camera.AspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
-    m_Camera.Transform.SetWorldPosition(glm::vec3(0, 0, 4));
+    m_Camera.Transform.SetWorldPosition(glm::vec3(0, 1, 4));
     m_Camera.Transform.LookAt(glm::vec3(0, 0, 0));
 
     m_Mesh = AssetsManager::LoadMeshImmediately("sphere.fbx");

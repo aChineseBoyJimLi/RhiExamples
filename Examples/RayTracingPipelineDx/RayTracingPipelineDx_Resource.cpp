@@ -136,7 +136,7 @@ static Microsoft::WRL::ComPtr<ID3D12Resource> UploadTexture(ID3D12Device* inDevi
 
 bool RayTracingPipelineDx::CreateResource()
 {
-    m_MainLight.Direction = {0.57735f, -0.57735f, 0.57735f};
+    m_MainLight.Direction = {-0.57735f, -0.57735f, -0.57735f};
     m_MainLight.Color = {1.0f, 1.0f, 1.0f};
     m_MainLight.Intensity = 1.0f;
     
@@ -146,7 +146,12 @@ bool RayTracingPipelineDx::CreateResource()
 
     m_Mesh = AssetsManager::LoadMeshImmediately("sphere.fbx");
     m_MeshTransform.SetWorldPosition(glm::vec3(0, 0, 0));
-
+    
+    m_MeshInstances[0].Transform.SetWorldPosition(glm::vec3(0, 0, 0));
+    m_MeshInstances[1].Transform.SetWorldPosition(glm::vec3(1, -1, 2));
+    m_MeshInstances[2].Transform.SetWorldPosition(glm::vec3(-1.5, 0, 0));
+    m_MeshInstances[2].Transform.SetLocalScale(glm::vec3(0.5, 0.5, 0.5));
+    
     if(m_Mesh == nullptr || m_Mesh->GetMesh() == nullptr)
     {
         Log::Error("Failed to load mesh");
@@ -169,6 +174,9 @@ bool RayTracingPipelineDx::CreateResource()
     
     m_IndicesBuffer = CreateBufferHelper(m_DeviceHandle.Get(), m_Mesh->GetIndicesDataByteSize(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_NONE);
     if(m_IndicesBuffer.Get() == nullptr) return false;
+
+    m_InstanceTransformBuffer = CreateBufferHelper(m_DeviceHandle.Get(), sizeof(TransformData) * s_MeshInstanceCount, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_FLAG_NONE);
+    if(m_InstanceTransformBuffer.Get() == nullptr) return false;
     
     m_TexcoordsBuffer = CreateBufferHelper(m_DeviceHandle.Get(), m_Mesh->GetTexCoordDataByteSize(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_FLAG_NONE);
     if(m_TexcoordsBuffer.Get() == nullptr) return false;
@@ -260,24 +268,19 @@ bool RayTracingPipelineDx::CreateBottomLevelAccelStructure()
     
     return true;
 }
-
 bool RayTracingPipelineDx::CreateTopLevelAccelStructure()
-{
-    std::array<D3D12_RAYTRACING_INSTANCE_DESC, 2> instanceDescs {};
-    instanceDescs[0].InstanceID = 0;
-    instanceDescs[0].InstanceContributionToHitGroupIndex = 0;
-    instanceDescs[0].InstanceMask = 0xFF;
-    instanceDescs[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-    instanceDescs[0].AccelerationStructure = m_BLASBuffer->GetGPUVirtualAddress();
-    instanceDescs[0].Transform[0][0] = instanceDescs[0].Transform[1][1] = instanceDescs[0].Transform[2][2] = 1;
 
-    instanceDescs[1].InstanceID = 1;
-    instanceDescs[1].InstanceContributionToHitGroupIndex = 0;
-    instanceDescs[1].InstanceMask = 0xFF;
-    instanceDescs[1].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-    instanceDescs[1].AccelerationStructure = m_BLASBuffer->GetGPUVirtualAddress();
-    instanceDescs[1].Transform[0][0] = instanceDescs[1].Transform[1][1] = instanceDescs[1].Transform[2][2] = 1;
-    instanceDescs[1].Transform[2][0] = instanceDescs[1].Transform[2][1] = instanceDescs[1].Transform[2][2] = 1;
+{
+    std::array<D3D12_RAYTRACING_INSTANCE_DESC, s_MeshInstanceCount> instanceDescs {};
+    for(uint32_t i = 0; i < s_MeshInstanceCount; ++i)
+    {
+        instanceDescs[i].InstanceID = i;
+        instanceDescs[i].InstanceContributionToHitGroupIndex = 0;
+        instanceDescs[i].InstanceMask = 0xFF;
+        instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+        instanceDescs[i].AccelerationStructure = m_BLASBuffer->GetGPUVirtualAddress();
+        m_MeshInstances[i].Transform.GetLocalToWorld3x4(instanceDescs[i].Transform);
+    }
 
     uint64_t instanceBufferSize = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * instanceDescs.size();
     Microsoft::WRL::ComPtr<ID3D12Resource> instanceBuffer = CreateBufferHelper(m_DeviceHandle.Get(), instanceBufferSize, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_FLAG_NONE);

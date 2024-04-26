@@ -36,7 +36,7 @@ void Transform::SetParent(Transform* inParent)
 void Transform::LookAt(const glm::vec3& inTarget)
 {
     const glm::vec3 localPosition = WorldToLocalPoint(inTarget);
-    const glm::vec3 localForward = -glm::normalize(localPosition);
+    const glm::vec3 localForward = glm::normalize(localPosition);
     SetLocalForward(localForward);
 }
 
@@ -264,6 +264,14 @@ glm::mat4 Transform::GetWorldToLocalMatrix() const
 void Transform::GetWorldToLocalMatrix(glm::mat4& outMatrix) const
 {
     outMatrix = GetWorldToLocalMatrix();
+}
+
+void Transform::GetLocalToWorld3x4(float transform[3][4]) const
+{
+    glm::mat4 matrix = GetLocalToWorldMatrix(); 
+    transform[0][0] = matrix[0][0]; transform[0][1] = matrix[0][1]; transform[0][2] = matrix[0][2];     transform[0][3] = matrix[3][0]; 
+    transform[1][0] = matrix[1][0]; transform[1][1] = matrix[1][1]; transform[1][2] = matrix[1][2];     transform[1][3] = matrix[3][1]; 
+    transform[2][0] = matrix[2][0]; transform[2][1] = matrix[2][1]; transform[2][2] = matrix[2][2];     transform[2][3] = matrix[3][2]; 
 }
 
 glm::vec3 Transform::GetLocalForward() const

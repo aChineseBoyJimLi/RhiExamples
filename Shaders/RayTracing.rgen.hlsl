@@ -8,10 +8,9 @@ void RayGen()
 
     const float2 pixelCenter = float2(launchIndex.xy) + float2(0.5, 0.5);
     const float2 inUV = pixelCenter/float2(launchSize.xy);
-    float2 d = inUV * 2.0 - 1.0;
     
     RayDesc rayDesc;
-    GenerateCameraRay(rayDesc.Origin, rayDesc.Direction, d, _CameraData);
+    GenerateCameraRay(rayDesc.Origin, rayDesc.Direction, inUV, _CameraData);
     rayDesc.TMin = 0.001;
     rayDesc.TMax = 10000.0;
 
