@@ -22,7 +22,7 @@
         Log::Error("[D3D12] Error: %s, In File: %s line %d", message.c_str(), __FILE__, __LINE__);\
     }
 
-void WriteBufferData(ID3D12Resource* inBuffer, const void* inData, uint32_t inSize);
+void WriteBufferData(ID3D12Resource* inBuffer, const void* inData, size_t inSize);
 
 static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferHelper(ID3D12Device* inDevice
     , size_t inSize
@@ -69,12 +69,12 @@ private:
     bool CreateCommandList();
     bool CreateDescriptorHeaps();
     bool CreateSwapChain();
-    // bool CreateRootSignature();
-    // bool CreateShader();
-    // bool CreatePipelineState();
-    // bool CreateDepthStencilBuffer();
-    // bool CreateResources();
-    // void UpdateConstants();
+    bool CreateRootSignature();
+    bool CreateShader();
+    bool CreatePipelineState();
+    bool CreateDepthStencilBuffer();
+    bool CreateResources();
+    void UpdateConstants();
     void FlushCommandQueue();
 
     Microsoft::WRL::ComPtr<IDXGIFactory2>               m_FactoryHandle;
@@ -96,10 +96,13 @@ private:
     std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_BackBuffers;
     uint32_t                                            m_CurrentIndex{0};
 
-    Microsoft::WRL::ComPtr<ID3D12RootSignature>         m_RootSignature;
+    Microsoft::WRL::ComPtr<ID3D12RootSignature>         m_IndirectDrawPassRS;
+    Microsoft::WRL::ComPtr<ID3D12RootSignature>         m_CullingPassRS;
+    std::shared_ptr<AssetsManager::Blob>                m_ComputeShaderBlob;
     std::shared_ptr<AssetsManager::Blob>                m_VertexShaderBlob;
     std::shared_ptr<AssetsManager::Blob>                m_PixelShaderBlob;
-    Microsoft::WRL::ComPtr<ID3D12PipelineState>         m_PipelineState;
+    Microsoft::WRL::ComPtr<ID3D12PipelineState>         m_IndirectDrawPassPSO;
+    Microsoft::WRL::ComPtr<ID3D12PipelineState>         m_CullingPassPSO;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_DepthStencilBuffer;
     D3D12_CPU_DESCRIPTOR_HANDLE                         m_DsvHandle;

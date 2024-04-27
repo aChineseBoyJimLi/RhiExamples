@@ -4,8 +4,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     try
     {
-        // GraphicsPipelineDx app(1280, 720, hInstance, TEXT("D3D12 Graphics Pipeline"));
-        // app.Run();
+        IndirectDrawDx app(1280, 720, hInstance, TEXT("D3D12 Indirect Draw"));
+        app.Run();
         return 0;
     }
     catch (std::runtime_error& err)

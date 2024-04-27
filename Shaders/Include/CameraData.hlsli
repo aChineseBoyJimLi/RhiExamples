@@ -11,6 +11,11 @@ struct CameraData
     float3  Position;
 };
 
+struct ViewFrustum
+{
+    float4 Planes[6]; // Near, Far, Left, Right, Top, Bottom
+};
+
 float3 TransformWorldToView(in CameraData Data, in float3 posWS)
 {
     return mul(Data.View, float4(posWS, 1.0f)).xyz;
@@ -52,6 +57,44 @@ void GenerateCameraRay(out float3 origin, out float3 direction, in float2 screen
     origin = cameraData.Position;
     float4 target = TransformClipToView(cameraData, float4(d.x, d.y, 1, 1));
     direction = TransformViewToWorldDir(cameraData, target.xyz);
+}
+
+bool IsPointInFrustum(in ViewFrustum frustum, in float3 p)
+{
+    for (int i = 0; i < 6; i++)
+    {
+        if (dot(frustum.Planes[i], float4(p, 1.0f)) > 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool IsAABBInFrustum(in ViewFrustum frustum, in float3 min, in float3 max)
+{
+    float3 corners[8];
+    corners[0] = float3(min.x, min.y, min.z);
+    corners[1] = float3(max.x, min.y, min.z);
+    corners[2] = float3(min.x, max.y, min.z);
+    corners[3] = float3(max.x, max.y, min.z);
+    corners[4] = float3(min.x, min.y, max.z);
+    corners[5] = float3(max.x, min.y, max.z);
+    corners[6] = float3(min.x, max.y, max.z);
+    corners[7] = float3(max.x, max.y, max.z);
+
+    
+    for (int i = 0; i < 6; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            if(IsPointInFrustum(frustum, corners[j]))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 #endif // CAMERA_DATA_HLSLI

@@ -29,20 +29,20 @@ bool IndirectDrawDx::Init()
     if(!CreateSwapChain())
         return false;
 
-    // if(!CreateDepthStencilBuffer())
-    //     return false;
-    //
-    // if(!CreateRootSignature())
-    //     return false;
-    //
-    // if(!CreateShader())
-    //     return false;
-    //
-    // if(!CreatePipelineState())
-    //     return false;
-    //
-    // if(!CreateResources())
-    //     return false;
+    if(!CreateDepthStencilBuffer())
+        return false;
+    
+    if(!CreateRootSignature())
+        return false;
+    
+    if(!CreateShader())
+        return false;
+    
+    if(!CreatePipelineState())
+        return false;
+    
+    if(!CreateResources())
+        return false;
     
     return true;
 }
