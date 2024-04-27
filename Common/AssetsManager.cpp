@@ -204,7 +204,7 @@ namespace AssetsManager
         }
         else if(extension.compare(".png") == 0 || extension.compare(".jpg") == 0)
         {
-            int width, height, originalChannels;
+            int width, height, originalChannels, channels;
             if(!stbi_info_from_memory(blob->GetData()
                 , static_cast<int>(blob->GetSize())
                 , &width
@@ -224,11 +224,13 @@ namespace AssetsManager
             m_Metadata.miscFlags = 0;
             m_Metadata.miscFlags2 = originalChannels == 3 ? DirectX::TEX_ALPHA_MODE_OPAQUE : 0;
 
+            channels = originalChannels == 3 ? 4 : originalChannels;
+            
             stbi_uc* bitmap = stbi_load_from_memory( blob->GetData()
                                 ,static_cast<int>(blob->GetSize())
                                 , &width
                                 , &height
-                                , &originalChannels, originalChannels);
+                                , &originalChannels, channels);
 
             if(bitmap == nullptr)
             {
@@ -241,7 +243,7 @@ namespace AssetsManager
             image.width = m_Metadata.width;
             image.height = m_Metadata.height;
             image.format = m_Metadata.format;
-            image.rowPitch = m_Metadata.width * originalChannels;
+            image.rowPitch = m_Metadata.width * channels;
             image.slicePitch = image.rowPitch * m_Metadata.height;
             image.pixels = bitmap;
             m_ScratchImage.InitializeFromImage(image);

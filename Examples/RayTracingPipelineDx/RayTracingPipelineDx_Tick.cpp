@@ -8,7 +8,7 @@ void RayTracingPipelineDx::UpdateConstants()
 
     DirectionalLightData lightData;
     lightData.LightColor = m_MainLight.Color;
-    lightData.LightDirection = m_MainLight.Direction;
+    lightData.LightDirection = m_MainLight.Transform.GetWorldForward();
     lightData.LightIntensity = m_MainLight.Intensity;
     WriteBufferData(m_LightDataBuffer.Get(), &lightData, DirectionalLightData::GetAlignedByteSizes());
     

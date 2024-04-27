@@ -65,8 +65,8 @@ bool MeshPipelineDx::CreatePipelineState()
 {
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pipelineDesc = {};
     pipelineDesc.pRootSignature        = m_RootSignature.Get();
-    pipelineDesc.MS                    = { m_MeshShaderBlob->GetData(), m_MeshShaderBlob->GetSize() };
-    pipelineDesc.PS                    = { m_PixelShaderBlob->GetData(), m_PixelShaderBlob->GetSize() };
+    pipelineDesc.MS                    = CD3DX12_SHADER_BYTECODE( m_MeshShaderBlob->GetData(), m_MeshShaderBlob->GetSize() );
+    pipelineDesc.PS                    = CD3DX12_SHADER_BYTECODE( m_PixelShaderBlob->GetData(), m_PixelShaderBlob->GetSize() );
     pipelineDesc.NumRenderTargets      = 1;
     pipelineDesc.RTVFormats[0]         = s_BackBufferFormat;
     pipelineDesc.DSVFormat             = s_DepthStencilBufferFormat;
@@ -75,6 +75,8 @@ bool MeshPipelineDx::CreatePipelineState()
     pipelineDesc.DepthStencilState     = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT); // Less-equal depth test w/ writes; no stencil
     pipelineDesc.SampleMask            = UINT_MAX;
     pipelineDesc.SampleDesc            = DefaultSampleDesc();
+    pipelineDesc.NodeMask              = GetNodeMask();
+    pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
     auto psoStream = CD3DX12_PIPELINE_MESH_STATE_STREAM(pipelineDesc);
     D3D12_PIPELINE_STATE_STREAM_DESC streamDesc;

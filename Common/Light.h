@@ -16,24 +16,19 @@ struct DirectionalLightData
     }
 };
 
-struct light
+struct Light
 {
+    Transform Transform;
     float Intensity;
     glm::vec3 Color;
-    Transform Transform;
 };
 
-struct DirectionalLight : light
-{
-    glm::vec3 Direction;
-};
-
-struct PointLight : light
+struct PointLight : Light
 {
     float Radius;
 };
 
-struct SpotLight : light
+struct SpotLight : Light
 {
     glm::vec3 Direction;
     float Radius;

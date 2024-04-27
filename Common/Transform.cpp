@@ -276,47 +276,47 @@ void Transform::GetLocalToWorld3x4(float transform[3][4]) const
 
 glm::vec3 Transform::GetLocalForward() const
 {
-    return RotateVector(m_LocalRotation, glm::vec3(0, 0, 1));
+    return glm::normalize(RotateVector(m_LocalRotation, glm::vec3(0, 0, 1)));
 }
 
 glm::vec3 Transform::GetLocalRight() const
 {
-    return RotateVector(m_LocalRotation, glm::vec3(1, 0, 0));
+    return glm::normalize(RotateVector(m_LocalRotation, glm::vec3(1, 0, 0)));
 }
 
 glm::vec3 Transform::GetLocalUp() const
 {
-    return RotateVector(m_LocalRotation, glm::vec3(0, 1, 0));
+    return glm::normalize(RotateVector(m_LocalRotation, glm::vec3(0, 1, 0)));
 }
 
 glm::vec3 Transform::GetWorldForward() const
 {
-    return LocalToWorldVector(glm::vec3(0, 0, 1));
+    return glm::normalize(LocalToWorldVector(glm::vec3(0, 0, 1)));
 }
 
 glm::vec3 Transform::GetWorldRight() const
 {
-    return LocalToWorldVector(glm::vec3(1, 0, 0));
+    return glm::normalize(LocalToWorldVector(glm::vec3(1, 0, 0)));
 }
 
 glm::vec3 Transform::GetWorldUp() const
 {
-    return LocalToWorldVector(glm::vec3(0, 1, 0));
+    return glm::normalize(LocalToWorldVector(glm::vec3(0, 1, 0)));
 }
 
 void Transform::SetLocalForward(const glm::vec3& inVec)
 {
-    m_LocalRotation = GetRotationQuaternionFromTo(glm::vec3(0, 0, 1), inVec);
+    m_LocalRotation = GetRotationQuaternionFromTo(inVec, glm::vec3(0, 0, 1));
 }
 
 void Transform::SetLocalRight(const glm::vec3& inVec)
 {
-    m_LocalRotation = GetRotationQuaternionFromTo(glm::vec3(1, 0, 0), inVec);
+    m_LocalRotation = GetRotationQuaternionFromTo(inVec, glm::vec3(1, 0, 0));
 }
 
 void Transform::SetLocalUp(const glm::vec3& inVec)
 {
-    m_LocalRotation = GetRotationQuaternionFromTo(glm::vec3(0, 1, 0), inVec);
+    m_LocalRotation = GetRotationQuaternionFromTo(inVec, glm::vec3(0, 1, 0));
 }
 
 void Transform::SetWorldForward(const glm::vec3& inVec)

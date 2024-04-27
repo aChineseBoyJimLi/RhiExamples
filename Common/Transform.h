@@ -26,9 +26,9 @@ public:
     void SetParent(Transform* inParent);
     
     void SetLocalPosition(const glm::vec3& inPosition) { m_LocalPosition = inPosition; }
-    void SetLocalRotation(const glm::quat& inRotation) { m_LocalRotation = inRotation; }
+    void SetLocalRotation(const glm::quat& inRotation) { m_LocalRotation = glm::normalize(inRotation); }
     void SetLocalRotation(const glm::vec3& inEulerAngles) { m_LocalRotation = glm::quat(inEulerAngles); }
-    void SetLocalRotation(const glm::vec3& inAxis, float inAngleDegrees) { m_LocalRotation = glm::angleAxis(glm::radians(inAngleDegrees), inAxis); }
+    void SetLocalRotation(const glm::vec3& inAxis, float inAngleDegrees) { m_LocalRotation = glm::angleAxis(glm::radians(inAngleDegrees), glm::normalize(inAxis)); }
     void SetLocalScale(const glm::vec3& inScale) { m_LocalScale = inScale;}
     
     void SetWorldPosition(const glm::vec3& inPosition);

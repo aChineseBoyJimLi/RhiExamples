@@ -4,7 +4,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     try
     {
-        GraphicsPipelineDx app(320, 200, hInstance, TEXT("D3D12 Graphics Pipeline"));
+        GraphicsPipelineDx app(1280, 720, hInstance, TEXT("D3D12 Graphics Pipeline"));
         app.Run();
         return 0;
     }

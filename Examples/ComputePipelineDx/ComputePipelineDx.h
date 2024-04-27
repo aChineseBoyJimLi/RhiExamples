@@ -39,7 +39,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureHelper(ID3D12Device* inDevic
     , D3D12_RESOURCE_FLAGS inFlags
     , const D3D12_CLEAR_VALUE* inClearValue);
 
-class GraphicsPipelineDx : public Win32Base
+class ComputePipelineDx : public Win32Base
 {
 public:
     using Win32Base::Win32Base;
@@ -97,9 +97,12 @@ private:
     uint32_t                                            m_CurrentIndex{0};
 
     Microsoft::WRL::ComPtr<ID3D12RootSignature>         m_RootSignature;
+    Microsoft::WRL::ComPtr<ID3D12RootSignature>         m_DofRootSignature;
     std::shared_ptr<AssetsManager::Blob>                m_VertexShaderBlob;
     std::shared_ptr<AssetsManager::Blob>                m_PixelShaderBlob;
+    std::shared_ptr<AssetsManager::Blob>                m_ComputeShaderBlob;
     Microsoft::WRL::ComPtr<ID3D12PipelineState>         m_PipelineState;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_DofPipelineState;
 
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_DepthStencilBuffer;
     D3D12_CPU_DESCRIPTOR_HANDLE                         m_DsvHandle;

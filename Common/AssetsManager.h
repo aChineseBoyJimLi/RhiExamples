@@ -39,7 +39,8 @@ namespace AssetsManager
         Mesh() : m_Mesh(nullptr) {}
         ~Mesh() { Release(); }
 
-        uint32_t        GetVertexCount() const { return m_Mesh ? m_Mesh->mNumVertices : 0; }
+        bool            IsEmpty() const { return m_Mesh == nullptr; }
+        uint32_t        GetVerticesCount() const { return m_Mesh ? m_Mesh->mNumVertices : 0; }
         uint32_t        GetPrimCount() const { return m_Mesh ? m_Mesh->mNumFaces : 0; }
         uint32_t        GetIndicesCount() const { return (uint32_t)m_Indices.size(); }
         const aiMesh*   GetMesh() const { return m_Mesh; }
@@ -83,6 +84,8 @@ namespace AssetsManager
 
         bool ReadTexture(const std::filesystem::path& path);
         void Release();
+
+        bool IsEmpty() const { return m_ScratchImage.GetPixels() == nullptr; }
         
     private:
         DirectX::ScratchImage m_ScratchImage;

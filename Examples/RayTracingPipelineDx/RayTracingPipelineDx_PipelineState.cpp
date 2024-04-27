@@ -129,7 +129,6 @@ bool RayTracingPipelineDx::CreatePipelineState()
         OUTPUT_D3D12_FAILED_RESULT(hr)
         return false;
     }
-
     
     return true;
 }

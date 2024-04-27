@@ -1,6 +1,6 @@
-#include "GraphicsPipelineDx.h"
+#include "ComputePipelineDx.h"
 
-void GraphicsPipelineDx::UpdateConstants()
+void ComputePipelineDx::UpdateConstants()
 {
     CameraData cameraData;
     m_Camera.GetCameraData(cameraData);
@@ -13,7 +13,7 @@ void GraphicsPipelineDx::UpdateConstants()
     WriteBufferData(m_LightDataBuffer.Get(), &lightData, DirectionalLightData::GetAlignedByteSizes());
 }
 
-void GraphicsPipelineDx::Tick()
+void ComputePipelineDx::Tick()
 {
     if(!m_IsRunning)
     {

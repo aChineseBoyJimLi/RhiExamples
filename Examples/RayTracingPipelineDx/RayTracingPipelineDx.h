@@ -113,7 +113,7 @@ private:
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE          m_HitGroupRecord {};
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE          m_CallableShaderRecord {};
 
-    DirectionalLight                                    m_MainLight;
+    Light                                               m_MainLight;
     CameraPerspective                                   m_Camera;
     Transform                                           m_MeshTransform;
     std::shared_ptr<AssetsManager::Mesh>                m_Mesh;

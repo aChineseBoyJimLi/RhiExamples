@@ -1,11 +1,12 @@
-#include "GraphicsPipelineDx.h"
+#include "ComputePipelineDx.h"
 #include <array>
 
-bool GraphicsPipelineDx::CreateRootSignature()
+bool ComputePipelineDx::CreateRootSignature()
 {
     Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
     Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
 
+    // Graphics pipeline root signature
     std::array<CD3DX12_ROOT_PARAMETER, 6> rootParameters;
     rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL); // _CameraData
     rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL); // _LightData
@@ -35,14 +36,17 @@ bool GraphicsPipelineDx::CreateRootSignature()
     if(FAILED(hr))
     {
         OUTPUT_D3D12_FAILED_RESULT(hr)
-        Log::Error("[D3D12] Failed to create the root signature");
+        Log::Error("[D3D12] Failed to create the graphics pipeline root signature");
         return false;
     }
+
+    // Compute pipeline root signature
+    
     
     return true;
 }
 
-bool GraphicsPipelineDx::CreateShader()
+bool ComputePipelineDx::CreateShader()
 {
     m_VertexShaderBlob = AssetsManager::LoadShaderImmediately("Graphics.vs.bin");
     if(!m_VertexShaderBlob || m_VertexShaderBlob->IsEmpty())
@@ -60,7 +64,7 @@ bool GraphicsPipelineDx::CreateShader()
     return true;
 }
 
-bool GraphicsPipelineDx::CreatePipelineState()
+bool ComputePipelineDx::CreatePipelineState()
 {
     std::array<D3D12_INPUT_ELEMENT_DESC, 3> inputElements;
     inputElements[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };

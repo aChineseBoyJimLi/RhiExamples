@@ -1,4 +1,4 @@
-#include "GraphicsPipelineDx.h"
+#include "ComputePipelineDx.h"
 #include <random>
 
 Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferHelper(ID3D12Device* inDevice
@@ -133,7 +133,7 @@ static Microsoft::WRL::ComPtr<ID3D12Resource> UploadTexture(ID3D12Device* inDevi
     return stagingBuffer;
 }
 
-bool GraphicsPipelineDx::CreateDepthStencilBuffer()
+bool ComputePipelineDx::CreateDepthStencilBuffer()
 {
     D3D12_CLEAR_VALUE optClear;
     optClear.Format = s_DepthStencilBufferFormat;
@@ -191,7 +191,7 @@ struct VertexData
     glm::vec2 TexCoord;
 };
 
-bool GraphicsPipelineDx::CreateResources()
+bool ComputePipelineDx::CreateResources()
 {
     m_Camera.AspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
     m_Camera.Transform.SetWorldPosition(glm::vec3(0, 20, 20));

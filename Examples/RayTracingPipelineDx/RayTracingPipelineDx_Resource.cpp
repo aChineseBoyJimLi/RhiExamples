@@ -136,7 +136,7 @@ static Microsoft::WRL::ComPtr<ID3D12Resource> UploadTexture(ID3D12Device* inDevi
 
 bool RayTracingPipelineDx::CreateResource()
 {
-    m_MainLight.Direction = {-0.57735f, -0.57735f, -0.57735f};
+    m_MainLight.Transform.SetWorldForward(glm::vec3(-1, -1, -1));
     m_MainLight.Color = {1.0f, 1.0f, 1.0f};
     m_MainLight.Intensity = 1.0f;
     
@@ -147,7 +147,7 @@ bool RayTracingPipelineDx::CreateResource()
     m_Mesh = AssetsManager::LoadMeshImmediately("sphere.fbx");
     m_MeshTransform.SetWorldPosition(glm::vec3(0, 0, 0));
     
-    m_MeshInstances[0].Transform.SetWorldPosition(glm::vec3(0, 0, 0));
+    m_MeshInstances[0].Transform.SetWorldPosition(glm::vec3(0, 0.5f, 0));
     m_MeshInstances[1].Transform.SetWorldPosition(glm::vec3(1, -1, 2));
     m_MeshInstances[2].Transform.SetWorldPosition(glm::vec3(-1.5, 0, 0));
     m_MeshInstances[2].Transform.SetLocalScale(glm::vec3(0.5, 0.5, 0.5));
@@ -222,7 +222,7 @@ bool RayTracingPipelineDx::CreateBottomLevelAccelStructure()
     geometryDesc.Triangles.VertexBuffer.StartAddress = m_VerticesBuffer->GetGPUVirtualAddress();
     geometryDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(aiVector3D);
     geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-    geometryDesc.Triangles.VertexCount = m_Mesh->GetVertexCount();
+    geometryDesc.Triangles.VertexCount = m_Mesh->GetVerticesCount();
     geometryDesc.Triangles.IndexBuffer = m_IndicesBuffer->GetGPUVirtualAddress();
     geometryDesc.Triangles.IndexCount = m_Mesh->GetIndicesCount();
     geometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
@@ -324,7 +324,6 @@ bool RayTracingPipelineDx::CreateTopLevelAccelStructure()
 
 bool RayTracingPipelineDx::CreateShaderTable()
 {
-    
     constexpr uint32_t shaderIdentifierCount = 3; // RayGen * 1, Miss * 1, HitGroup * 1
     constexpr size_t shaderTableStride = align_to(64, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
     constexpr size_t shaderTableSize = shaderTableStride * shaderIdentifierCount;

@@ -1,4 +1,4 @@
-#include "GraphicsPipelineDx.h"
+#include "ComputePipelineDx.h"
 
 static void LogAdapterDesc(const DXGI_ADAPTER_DESC1& inDesc)
 {
@@ -12,7 +12,7 @@ static void LogAdapterDesc(const DXGI_ADAPTER_DESC1& inDesc)
     Log::Info("----------------------------------------------------------------", name.c_str());
 }
 
-bool GraphicsPipelineDx::Init()
+bool ComputePipelineDx::Init()
 {
     if(!CreateDevice())
         return false;
@@ -47,12 +47,12 @@ bool GraphicsPipelineDx::Init()
     return true;
 }
 
-void GraphicsPipelineDx::Shutdown()
+void ComputePipelineDx::Shutdown()
 {
     FlushCommandQueue();
 }
 
-bool GraphicsPipelineDx::CreateDevice()
+bool ComputePipelineDx::CreateDevice()
 {
     bool allowDebugging = false;
 #if _DEBUG || DEBUG
@@ -105,7 +105,7 @@ bool GraphicsPipelineDx::CreateDevice()
     return true;
 }
 
-bool GraphicsPipelineDx::CreateCommandQueue()
+bool ComputePipelineDx::CreateCommandQueue()
 {
     D3D12_COMMAND_QUEUE_DESC commandQueueDesc = {};
     commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -130,7 +130,7 @@ bool GraphicsPipelineDx::CreateCommandQueue()
     return true;
 }
 
-bool GraphicsPipelineDx::CreateCommandList()
+bool ComputePipelineDx::CreateCommandList()
 {
     HRESULT hr = m_DeviceHandle->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator));
     if(FAILED(hr))
@@ -151,7 +151,7 @@ bool GraphicsPipelineDx::CreateCommandList()
     return true;
 }
 
-void GraphicsPipelineDx::BeginCommandList()
+void ComputePipelineDx::BeginCommandList()
 {
     if(m_CommandList == nullptr)
         return;
@@ -163,7 +163,7 @@ void GraphicsPipelineDx::BeginCommandList()
     }
 }
 
-void GraphicsPipelineDx::EndCommandList()
+void ComputePipelineDx::EndCommandList()
 {
     if(!m_CommandListIsClosed)
     {
@@ -172,7 +172,7 @@ void GraphicsPipelineDx::EndCommandList()
     }
 }
 
-bool GraphicsPipelineDx::CreateDescriptorHeaps()
+bool ComputePipelineDx::CreateDescriptorHeaps()
 {
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -229,7 +229,7 @@ bool GraphicsPipelineDx::CreateDescriptorHeaps()
     return true;
 }
 
-bool GraphicsPipelineDx::CreateSwapChain()
+bool ComputePipelineDx::CreateSwapChain()
 {
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
     swapChainDesc.Width = m_Width;
@@ -288,7 +288,7 @@ bool GraphicsPipelineDx::CreateSwapChain()
     return true;
 }
 
-void GraphicsPipelineDx::FlushCommandQueue()
+void ComputePipelineDx::FlushCommandQueue()
 {
     if(m_CommandQueueHandle.Get())
     {
