@@ -38,7 +38,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureHelper(ID3D12Device* inDevic
 	, D3D12_RESOURCE_FLAGS inFlags
 	, const D3D12_CLEAR_VALUE* inClearValue);
 
-class GpuQueryDx : public Win32Base
+class VariableRateShadingDx : public Win32Base
 {
 public:
 	using Win32Base::Win32Base;

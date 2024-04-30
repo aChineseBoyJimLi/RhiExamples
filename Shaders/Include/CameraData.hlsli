@@ -13,7 +13,21 @@ struct CameraData
 
 struct ViewFrustum
 {
-    float4 Planes[6]; // Near, Far, Left, Right, Top, Bottom
+    // 0 near bottom left
+    // 1 near bottom right
+    // 2 near top right
+    // 3 near top left
+    // 4 far bottom left
+    // 5 far bottom right
+    // 6 far top right
+    // 7 far top left
+    float4 Corners[8]; 
+};
+
+struct ViewFrustumPlane
+{
+    // 0 Near, 1 Far, 2 Left, 3 Right, 4 Top, 5 Bottom
+    float4 Planes[6]; 
 };
 
 float3 TransformWorldToView(in CameraData Data, in float3 posWS)
@@ -59,7 +73,25 @@ void GenerateCameraRay(out float3 origin, out float3 direction, in float2 screen
     direction = TransformViewToWorldDir(cameraData, target.xyz);
 }
 
-bool IsPointInFrustum(in ViewFrustum frustum, in float3 p)
+float4 GetPlane(in float3 v0, in float3 v1, in float3 v2)
+{
+    float3 normal = normalize(cross(v1 - v0, v2 - v0));
+    return float4(normal, -dot(normal, v2));
+}
+
+ViewFrustumPlane GetViewFrustumPlanes(in ViewFrustum frustum)
+{
+    ViewFrustumPlane outFrustum;
+    outFrustum.Planes[0] = GetPlane(frustum.Corners[0].xyz, frustum.Corners[1].xyz, frustum.Corners[2].xyz); // Near
+    outFrustum.Planes[1] = GetPlane(frustum.Corners[6].xyz, frustum.Corners[5].xyz, frustum.Corners[4].xyz); // Far
+    outFrustum.Planes[2] = GetPlane(frustum.Corners[0].xyz, frustum.Corners[3].xyz, frustum.Corners[7].xyz); // Left
+    outFrustum.Planes[3] = GetPlane(frustum.Corners[1].xyz, frustum.Corners[5].xyz, frustum.Corners[6].xyz); // Right
+    outFrustum.Planes[4] = GetPlane(frustum.Corners[2].xyz, frustum.Corners[6].xyz, frustum.Corners[7].xyz); // Top
+    outFrustum.Planes[5] = GetPlane(frustum.Corners[1].xyz, frustum.Corners[0].xyz, frustum.Corners[4].xyz); // Bottom
+    return outFrustum;
+}
+
+bool IsPointInFrustum(in ViewFrustumPlane frustum, in float3 p)
 {
     for (int i = 0; i < 6; i++)
     {
@@ -71,7 +103,7 @@ bool IsPointInFrustum(in ViewFrustum frustum, in float3 p)
     return true;
 }
 
-bool IsAABBInFrustum(in ViewFrustum frustum, in float3 min, in float3 max)
+bool IsAABBInFrustum(in ViewFrustumPlane frustum, in float3 min, in float3 max)
 {
     float3 corners[8];
     corners[0] = float3(min.x, min.y, min.z);
@@ -82,19 +114,37 @@ bool IsAABBInFrustum(in ViewFrustum frustum, in float3 min, in float3 max)
     corners[5] = float3(max.x, min.y, max.z);
     corners[6] = float3(min.x, max.y, max.z);
     corners[7] = float3(max.x, max.y, max.z);
-
     
+    // if all the 8 points in the same outside of a plane, then the AABB is outside of the frustum
     for (int i = 0; i < 6; i++)
     {
+        int outCount = 8;
         for (int j = 0; j < 8; j++)
         {
-            if(IsPointInFrustum(frustum, corners[j]))
+            if (dot(frustum.Planes[i], float4(corners[j], 1.0f)) > 0)
             {
-                return true;
+                outCount--;
             }
         }
+        if (outCount == 0)
+        {
+            return false;
+        }
     }
-    return false;
+
+    return true;
+}
+
+bool IsSphereInFrustum(in ViewFrustumPlane frustum, in float3 center, in float radius)
+{
+    for (int i = 0; i < 6; i++)
+    {
+        if (dot(frustum.Planes[i], float4(center, 1.0f)) > radius)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 #endif // CAMERA_DATA_HLSLI

@@ -1,4 +1,4 @@
-#include "GpuQueryDx.h"
+#include "VariableRateShadingDx.h"
 
 static void LogAdapterDesc(const DXGI_ADAPTER_DESC1& inDesc)
 {
@@ -12,7 +12,7 @@ static void LogAdapterDesc(const DXGI_ADAPTER_DESC1& inDesc)
     Log::Info("----------------------------------------------------------------", name.c_str());
 }
 
-bool GpuQueryDx::Init()
+bool VariableRateShadingDx::Init()
 {
     if(!CreateDevice())
         return false;
@@ -53,12 +53,12 @@ bool GpuQueryDx::Init()
     return true;
 }
 
-void GpuQueryDx::Shutdown()
+void VariableRateShadingDx::Shutdown()
 {
     FlushCommandQueue();
 }
 
-bool GpuQueryDx::CreateDevice()
+bool VariableRateShadingDx::CreateDevice()
 {
     bool allowDebugging = false;
 #if _DEBUG || DEBUG
@@ -111,7 +111,7 @@ bool GpuQueryDx::CreateDevice()
     return true;
 }
 
-bool GpuQueryDx::CreateCommandQueue()
+bool VariableRateShadingDx::CreateCommandQueue()
 {
     D3D12_COMMAND_QUEUE_DESC commandQueueDesc = {};
     commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -136,7 +136,7 @@ bool GpuQueryDx::CreateCommandQueue()
     return true;
 }
 
-bool GpuQueryDx::CreateCommandList()
+bool VariableRateShadingDx::CreateCommandList()
 {
     HRESULT hr = m_DeviceHandle->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_CommandAllocator));
     if(FAILED(hr))
@@ -157,7 +157,7 @@ bool GpuQueryDx::CreateCommandList()
     return true;
 }
 
-void GpuQueryDx::BeginCommandList()
+void VariableRateShadingDx::BeginCommandList()
 {
     if(m_CommandList == nullptr)
         return;
@@ -169,7 +169,7 @@ void GpuQueryDx::BeginCommandList()
     }
 }
 
-void GpuQueryDx::EndCommandList()
+void VariableRateShadingDx::EndCommandList()
 {
     if(!m_CommandListIsClosed)
     {
@@ -178,7 +178,7 @@ void GpuQueryDx::EndCommandList()
     }
 }
 
-bool GpuQueryDx::CreateDescriptorHeaps()
+bool VariableRateShadingDx::CreateDescriptorHeaps()
 {
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
     rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -235,7 +235,7 @@ bool GpuQueryDx::CreateDescriptorHeaps()
     return true;
 }
 
-bool GpuQueryDx::CreateSwapChain()
+bool VariableRateShadingDx::CreateSwapChain()
 {
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
     swapChainDesc.Width = m_Width;
@@ -294,7 +294,7 @@ bool GpuQueryDx::CreateSwapChain()
     return true;
 }
 
-void GpuQueryDx::FlushCommandQueue()
+void VariableRateShadingDx::FlushCommandQueue()
 {
     if(m_CommandQueueHandle.Get())
     {

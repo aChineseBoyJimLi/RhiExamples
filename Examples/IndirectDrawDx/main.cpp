@@ -4,7 +4,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     try
     {
-        IndirectDrawDx app(1280, 720, hInstance, TEXT("D3D12 Indirect Draw"));
+        IndirectDrawDx app(320, 200, hInstance, TEXT("D3D12 Indirect Draw"));
         app.Run();
         return 0;
     }

@@ -63,7 +63,11 @@ namespace AssetsManager
 
     bool Mesh::ReadMesh(const std::filesystem::path& inPath)
     {
-        const aiScene* scene = m_Importer.ReadFile(inPath.generic_string(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals | aiProcess_CalcTangentSpace);
+        std::shared_ptr<Blob> blob = std::make_shared<Blob>();
+        if(!blob->ReadBinaryFile(inPath))
+            return false;
+        
+        const aiScene* scene = m_Importer.ReadFileFromMemory(blob->GetData(), blob->GetSize(), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals | aiProcess_CalcTangentSpace | aiProcess_GenBoundingBoxes);
         if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
             Log::Error("Failed to load model %s", inPath.string().c_str());
