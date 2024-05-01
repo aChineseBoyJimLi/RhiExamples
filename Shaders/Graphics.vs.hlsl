@@ -4,7 +4,6 @@ VertexOutput main(VertexInput input, uint instanceID : SV_InstanceID)
 {
     VertexOutput output;
     InstanceData instanceData = _InstanceData[instanceID];
-    TransformData transformData;
 	float3 posWS = TransformLocalToWorld(instanceData.Transform, input.Position);
     float4 posHS = TransformWorldToClip(_CameraData, posWS);
     output.Position = posHS;

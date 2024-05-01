@@ -4,12 +4,12 @@ static void LogAdapterDesc(const DXGI_ADAPTER_DESC1& inDesc)
 {
     std::wstring adapterDesc(inDesc.Description);
     std::string name(adapterDesc.begin(), adapterDesc.end());
-    Log::Info("----------------------------------------------------------------", name.c_str());
+    Log::Info("----------------------------------------------------------------");
     Log::Info("[D3D12] Adapter Description: %s", name.c_str());
     Log::Info("[D3D12] Adapter Dedicated Video Memory: %d MB", inDesc.DedicatedVideoMemory >> 20);
     Log::Info("[D3D12] Adapter Dedicated System Memory: %d MB", inDesc.DedicatedSystemMemory >> 20);
     Log::Info("[D3D12] Adapter Shared System Memory: %d MB", inDesc.SharedSystemMemory >> 20);
-    Log::Info("----------------------------------------------------------------", name.c_str());
+    Log::Info("----------------------------------------------------------------");
 }
 
 bool ComputePipelineDx::Init()

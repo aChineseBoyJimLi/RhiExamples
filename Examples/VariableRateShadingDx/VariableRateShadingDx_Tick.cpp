@@ -40,6 +40,8 @@ void VariableRateShadingDx::Tick()
     D3D12_RECT scissorRect = { 0, 0, m_Width, m_Height };
     m_CommandList->RSSetScissorRects(1, &scissorRect);
 
+    // m_CommandList->RSSetShadingRate(D3D12_SHADING_RATE_2X2, nullptr);
+
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle[] = {m_RtvHandles[m_CurrentIndex]};
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_DsvHandle;
     m_CommandList->OMSetRenderTargets(1, rtvHandle, false, &dsvHandle);
