@@ -276,13 +276,13 @@ bool GraphicsPipelineVk::CreateResources()
 
     std::array<VkWriteDescriptorSet, 6> descriptorWrites{};
     VkDescriptorBufferInfo cameraBufferInfo = CreateDescriptorBufferInfo(m_CameraDataBuffer, CameraData::GetAlignedByteSizes());
-    UpdateBufferDescriptor(descriptorWrites[0], m_DescriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &cameraBufferInfo, 0 + SPIRV_CBV_BINDING_OFFSET); // _CameraData 
+    UpdateBufferDescriptor(descriptorWrites[0], m_DescriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &cameraBufferInfo, GetBindingSlot(ERegisterType::ConstantBuffer, 0)); // _CameraData 
     
     VkDescriptorBufferInfo lightBufferInfo = CreateDescriptorBufferInfo(m_LightDataBuffer, DirectionalLightData::GetAlignedByteSizes());
-    UpdateBufferDescriptor(descriptorWrites[1], m_DescriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &lightBufferInfo, 1 + SPIRV_CBV_BINDING_OFFSET); // _LightData
+    UpdateBufferDescriptor(descriptorWrites[1], m_DescriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &lightBufferInfo, GetBindingSlot(ERegisterType::ConstantBuffer, 1)); // _LightData
     
     VkDescriptorBufferInfo instanceBufferInfo = CreateDescriptorBufferInfo(m_InstanceBuffer, instanceBufferBytesSize);
-    UpdateBufferDescriptor(descriptorWrites[2], m_DescriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &instanceBufferInfo, 0 + SPIRV_SRV_BINDING_OFFSET); // _InstancesBuffer
+    UpdateBufferDescriptor(descriptorWrites[2], m_DescriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &instanceBufferInfo, GetBindingSlot(ERegisterType::ShaderResource, 0)); // _InstancesBuffer
 
     std::array<VkDescriptorImageInfo, s_TexturesCount> imageDescriptorInfos;
     std::array<VkDescriptorImageInfo, s_TexturesCount> samplerDescriptorInfos;
@@ -298,21 +298,21 @@ bool GraphicsPipelineVk::CreateResources()
         , VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
         , imageDescriptorInfos.data()
         , (uint32_t)imageDescriptorInfos.size()
-        , 1 + SPIRV_SRV_BINDING_OFFSET); // _MainTex
+        , GetBindingSlot(ERegisterType::ShaderResource, 1)); // _MainTex
     
     VkDescriptorBufferInfo materialsBufferInfo = CreateDescriptorBufferInfo(m_MaterialsBuffer, materialsBufferBytesSize);
     UpdateBufferDescriptor(descriptorWrites[4]
         , m_DescriptorSet
         , VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
         , &materialsBufferInfo
-        , 6 + SPIRV_SRV_BINDING_OFFSET); // _MaterialsBuffer
+        , GetBindingSlot(ERegisterType::ShaderResource, 6)); // _MaterialsBuffer
 
     UpdateImageDescriptor(descriptorWrites[5]
         , m_DescriptorSet
         , VK_DESCRIPTOR_TYPE_SAMPLER
         , samplerDescriptorInfos.data()
         , (uint32_t)samplerDescriptorInfos.size()
-        , 0 + SPIRV_SAMPLER_BINDING_OFFSET); // _MainTexSampler
+        , GetBindingSlot(ERegisterType::Sampler, 0)); // _MainTexSampler
     
 
     vkUpdateDescriptorSets(m_DeviceHandle, (uint32_t)descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);

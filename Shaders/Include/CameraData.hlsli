@@ -82,12 +82,12 @@ float4 GetPlane(in float3 v0, in float3 v1, in float3 v2)
 ViewFrustumPlane GetViewFrustumPlanes(in ViewFrustum frustum)
 {
     ViewFrustumPlane outFrustum;
-    outFrustum.Planes[0] = GetPlane(frustum.Corners[0].xyz, frustum.Corners[1].xyz, frustum.Corners[2].xyz); // Near
-    outFrustum.Planes[1] = GetPlane(frustum.Corners[6].xyz, frustum.Corners[5].xyz, frustum.Corners[4].xyz); // Far
-    outFrustum.Planes[2] = GetPlane(frustum.Corners[0].xyz, frustum.Corners[3].xyz, frustum.Corners[7].xyz); // Left
-    outFrustum.Planes[3] = GetPlane(frustum.Corners[1].xyz, frustum.Corners[5].xyz, frustum.Corners[6].xyz); // Right
-    outFrustum.Planes[4] = GetPlane(frustum.Corners[2].xyz, frustum.Corners[6].xyz, frustum.Corners[7].xyz); // Top
-    outFrustum.Planes[5] = GetPlane(frustum.Corners[1].xyz, frustum.Corners[0].xyz, frustum.Corners[4].xyz); // Bottom
+    outFrustum.Planes[0] = GetPlane(frustum.Corners[2].xyz, frustum.Corners[1].xyz, frustum.Corners[0].xyz); // Near
+    outFrustum.Planes[1] = GetPlane(frustum.Corners[4].xyz, frustum.Corners[5].xyz, frustum.Corners[6].xyz); // Far
+    outFrustum.Planes[2] = GetPlane(frustum.Corners[7].xyz, frustum.Corners[3].xyz, frustum.Corners[0].xyz); // Left
+    outFrustum.Planes[3] = GetPlane(frustum.Corners[6].xyz, frustum.Corners[5].xyz, frustum.Corners[1].xyz); // Right
+    outFrustum.Planes[4] = GetPlane(frustum.Corners[7].xyz, frustum.Corners[6].xyz, frustum.Corners[2].xyz); // Top
+    outFrustum.Planes[5] = GetPlane(frustum.Corners[4].xyz, frustum.Corners[0].xyz, frustum.Corners[1].xyz); // Bottom
     return outFrustum;
 }
 

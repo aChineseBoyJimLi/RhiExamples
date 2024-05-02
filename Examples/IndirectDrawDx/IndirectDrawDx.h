@@ -68,6 +68,7 @@ public:
     static constexpr uint32_t           s_ThreadGroupSize = 128;
     static constexpr uint32_t           s_TexturesCount = 5;
 
+protected:
     bool Init() override;
     void Tick() override;
     void Shutdown() override;

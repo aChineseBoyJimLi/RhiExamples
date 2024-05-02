@@ -12,6 +12,23 @@ void WriteBufferData(VkDevice inDevice, VkDeviceMemory inBuffer, const void* inD
     vkUnmapMemory(inDevice, inBuffer);
 }
 
+uint32_t GetBindingSlot(ERegisterType registerType, uint32_t inRegisterSlot)
+{
+    switch (registerType)
+    {
+        case ERegisterType::ConstantBuffer:
+            return inRegisterSlot + SPIRV_CBV_BINDING_OFFSET;
+        case ERegisterType::ShaderResource:
+            return inRegisterSlot + SPIRV_SRV_BINDING_OFFSET;
+        case ERegisterType::UnorderedAccess:
+            return inRegisterSlot + SPIRV_UAV_BINDING_OFFSET;
+        case ERegisterType::Sampler:
+            return inRegisterSlot + SPIRV_SAMPLER_BINDING_OFFSET;
+        default:
+            return inRegisterSlot;
+    }
+}
+
 VkDescriptorBufferInfo CreateDescriptorBufferInfo(VkBuffer inBuffer, size_t inSize)
 {
     VkDescriptorBufferInfo bufferInfo{};
@@ -154,7 +171,7 @@ bool AppBaseVk::CreateDescriptorSetPool()
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = 1; // only one set can be allocated from this pool
+    poolInfo.maxSets = 100; 
     poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
     VkResult result = vkCreateDescriptorPool(m_DeviceHandle, &poolInfo, nullptr, &m_DescriptorPoolHandle);

@@ -286,9 +286,9 @@ bool IndirectDrawDx::CreateResources()
 
         ViewFrustum frustum;
         m_Camera.GetViewFrustumWorldSpace(frustum);
-        for(uint32_t i = 0; i < 8; ++i)
+        for(uint32_t j = 0; j < 8; ++j)
         {
-            frustum.Corners[i] = transform.WorldToLocalPoint(frustum.Corners[i]);
+            frustum.Corners[j] = transform.WorldToLocalPoint(frustum.Corners[j]);
         }
         ViewFrustumPlanes planes = CameraBase::Corners2Planes(frustum);
         bool inter = CameraBase::IsAABBInFrustum(planes, instancesData[i].AABB.Min, instancesData[i].AABB.Max);

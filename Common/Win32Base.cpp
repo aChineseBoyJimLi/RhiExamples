@@ -20,7 +20,7 @@ Win32Base::Win32Base(uint32_t inWidth, uint32_t inHeight, HINSTANCE inHInstance,
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = TEXT("FWinApp");
+    wc.lpszClassName = TEXT("WinApp");
 
     if(!RegisterClass(&wc))
     {
@@ -34,7 +34,7 @@ Win32Base::Win32Base(uint32_t inWidth, uint32_t inHeight, HINSTANCE inHInstance,
     const int height = R.bottom - R.top;
 
     m_hWnd = CreateWindow(
-        TEXT("FWinApp"), inTitle,
+        TEXT("WinApp"), inTitle,
         WS_OVERLAPPEDWINDOW^WS_THICKFRAME^WS_MAXIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT,
         width, height,

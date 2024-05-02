@@ -36,7 +36,16 @@ private:
     VkDeviceMemory  m_Memory;
 };
 
+enum class ERegisterType : uint8_t
+{
+    ConstantBuffer, // b
+    ShaderResource, // t
+    UnorderedAccess,// u
+    Sampler         // s
+};
+
 void WriteBufferData(VkDevice inDevice, VkDeviceMemory inBuffer, const void* inData, size_t inSize, size_t inOffset = 0);
+uint32_t GetBindingSlot(ERegisterType registerType, uint32_t inRegisterSlot);
 VkDescriptorBufferInfo CreateDescriptorBufferInfo(VkBuffer inBuffer, size_t inSize);
 VkDescriptorImageInfo CreateDescriptorImageInfo(VkImageView inImageView, VkSampler inSampler);
 void UpdateBufferDescriptor(VkWriteDescriptorSet& outDescriptor, VkDescriptorSet inSet, VkDescriptorType inType, VkDescriptorBufferInfo* inBufferInfo, uint32_t inBinding);

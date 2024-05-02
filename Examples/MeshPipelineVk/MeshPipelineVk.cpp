@@ -1,4 +1,4 @@
-#include "GraphicsPipelineVk.h"
+#include "MeshPipelineVk.h"
 #include <vector>
 #include <array>
 
@@ -49,7 +49,7 @@ static void LogGpuProperties(const VkPhysicalDeviceProperties& inProperties)
     Log::Info("----------------------------------------------------------------");
 }
 
-bool GraphicsPipelineVk::Init()
+bool MeshPipelineVk::Init()
 {
     if(!CreateDevice())
         return false;
@@ -89,12 +89,16 @@ bool GraphicsPipelineVk::Init()
 
     if(!CreateResources())
         return false;
+
+    if(!CreateDescriptorSet())
+        return false;
     
     return true;    
 }
 
-void GraphicsPipelineVk::Shutdown()
+void MeshPipelineVk::Shutdown()
 {
+    DestroyDescriptorSet();
     DestroyResources();
     DestroyFrameBuffer();
     DestroyDepthStencilBuffer();
@@ -109,12 +113,12 @@ void GraphicsPipelineVk::Shutdown()
     DestroyDevice();
 }
 
-bool GraphicsPipelineVk::CreateDevice()
+bool MeshPipelineVk::CreateDevice()
 {
     // Create Vulkan instance
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "GraphicsPipelineVk";
+    appInfo.pApplicationName = "MeshPipelineVk";
     appInfo.pEngineName = "No Engine";
     appInfo.apiVersion = VK_API_VERSION_1_3;
 
@@ -290,7 +294,7 @@ bool GraphicsPipelineVk::CreateDevice()
     return true;
 }
 
-void GraphicsPipelineVk::DestroyDevice()
+void MeshPipelineVk::DestroyDevice()
 {
     if(m_DeviceHandle != VK_NULL_HANDLE)
     {

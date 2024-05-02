@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../AppBaseVk.h"
-
 #include "Transform.h"
 #include "Camera.h"
 #include "Light.h"
@@ -34,15 +33,37 @@ struct VertexData
     glm::vec2 TexCoord;
 };
 
-class GraphicsPipelineVk : public AppBaseVk
+struct AABB
+{
+    glm::vec4 Min;
+    glm::vec4 Max;
+    static uint64_t GetAlignedByteSizes()
+    {
+        return (sizeof(AABB) + 255) & ~255;
+    }
+};
+
+struct ViewFrustumCB
+{
+    glm::vec4 Corners[8];
+    static uint64_t GetAlignedByteSizes()
+    {
+        return (sizeof(ViewFrustumCB) + 255) & ~255;
+    }
+};
+
+class IndirectDrawVk : public AppBaseVk
 {
 public:
     using AppBaseVk::AppBaseVk;
     static constexpr uint32_t s_TexturesCount = 5;
-    static constexpr uint32_t s_InstancesCount = 1024;
+    // static constexpr uint32_t s_InstanceCountX = 16, s_InstanceCountY = 16, s_InstanceCountZ = 16;
+    static constexpr uint32_t s_InstanceCountX = 8, s_InstanceCountY = 8, s_InstanceCountZ = 8;
+    static constexpr uint32_t s_InstancesCount = s_InstanceCountX * s_InstanceCountY * s_InstanceCountZ;
+    static constexpr uint32_t s_ThreadGroupSize = 128;
     static constexpr uint32_t s_MaterialCount = 100;
     static constexpr VkFormat s_DepthStencilFormat = VK_FORMAT_D32_SFLOAT;
-    
+
 protected:
     bool Init() override;
     void Tick() override;
@@ -66,17 +87,24 @@ private:
     bool CreateScene();
     bool CreateResources();
     void DestroyResources();
+    bool CreateDescriptorSet();
+    void DestroyDescriptorSet();
     void UpdateConstants();
-
-
-    VkDescriptorSetLayout       m_DescriptorLayout;
-    std::shared_ptr<AssetsManager::Blob> m_VertexShaderBlob;
-    std::shared_ptr<AssetsManager::Blob> m_PixelShaderBlob;
-    VkShaderModule              m_VertexShaderModule;
-    VkShaderModule              m_PixelShaderModule;
-    VkRenderPass                m_RenderPassHandle;
-    VkPipelineLayout            m_PipelineLayout;
-    VkPipeline                  m_PipelineState;
+    
+    VkDescriptorSetLayout                   m_DescriptorLayout;
+    VkDescriptorSetLayout                   m_DescriptorLayoutSpace1;
+    VkDescriptorSetLayout                   m_CullingPassDescriptorSetLayout;
+    std::shared_ptr<AssetsManager::Blob>    m_VertexShaderBlob;
+    std::shared_ptr<AssetsManager::Blob>    m_PixelShaderBlob;
+    std::shared_ptr<AssetsManager::Blob>    m_ComputeShaderBlob;
+    VkShaderModule                          m_VertexShaderModule;
+    VkShaderModule                          m_PixelShaderModule;
+    VkShaderModule                          m_ComputeShaderModule;
+    VkRenderPass                            m_RenderPassHandle;
+    VkPipelineLayout                        m_PipelineLayout;
+    VkPipelineLayout                        m_CullingPassPipelineLayout;
+    VkPipeline                              m_PipelineState;
+    VkPipeline                              m_CullingPassPipelineState;
 
     VkDeviceMemory              m_DepthStencilMemory;
     VkImage                     m_DepthStencilTexture;
@@ -94,6 +122,8 @@ private:
 
     VkBuffer                    m_CameraDataBuffer;
     VkDeviceMemory              m_CameraBufferMemory;
+    VkBuffer                    m_ViewFrustumBuffer;
+    VkDeviceMemory              m_ViewFrustumBufferMemory;
     VkBuffer                    m_LightDataBuffer;
     VkDeviceMemory              m_LightDataMemory;
     VkBuffer                    m_InstanceBuffer;
@@ -104,11 +134,18 @@ private:
     VkDeviceMemory              m_VerticesBufferMemory;
     VkBuffer                    m_IndicesBuffer;
     VkDeviceMemory              m_IndicesBufferMemory;
+    VkBuffer                    m_AABBBuffer;
+    VkDeviceMemory              m_AABBBufferMemory;
+    VkBuffer                    m_IndirectCommandsBuffer;
+    VkDeviceMemory              m_IndirectCommandsBufferMemory;
+    
     std::array<VkImage,  s_TexturesCount>           m_MainTextures;
     std::array<VkImageView, s_TexturesCount>        m_MainTextureViews;
     std::array<VkDeviceMemory, s_TexturesCount>     m_MainTextureMemories;
     std::array<VkSampler, s_TexturesCount>     m_MainTextureSamplers;
+
+    std::array<VkDrawIndexedIndirectCommand, s_InstancesCount> m_IndirectDrawCommands;
     
     VkDescriptorSet             m_DescriptorSet;
-    
+    VkDescriptorSet             m_CullingPassDescriptorSet;
 };

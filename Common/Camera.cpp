@@ -2,23 +2,23 @@
 
 #include <DirectXCollision.h>
 
-// Three points define a plane
-// Plane equation: Ax + By + Cz + D = 0
+// Counter-clockwise order 3 points define a plane
+// plane equation: Ax + By + Cz + D = 0
 static glm::vec4 GetPlane(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2)
 {
     glm::vec3 normal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
-    return glm::vec4(normal, -glm::dot(normal, v2));
+    return glm::vec4(normal, -glm::dot(normal, v0));
 }
 
 ViewFrustumPlanes CameraBase::Corners2Planes(const ViewFrustum& inFrustum)
 {
     ViewFrustumPlanes outFrustum;
-    outFrustum.Planes[0] = GetPlane(inFrustum.Corners[0], inFrustum.Corners[1], inFrustum.Corners[2]); // Near
-    outFrustum.Planes[1] = GetPlane(inFrustum.Corners[6], inFrustum.Corners[5], inFrustum.Corners[4]); // Far
-    outFrustum.Planes[2] = GetPlane(inFrustum.Corners[0], inFrustum.Corners[3], inFrustum.Corners[7]); // Left
-    outFrustum.Planes[3] = GetPlane(inFrustum.Corners[1], inFrustum.Corners[5], inFrustum.Corners[6]); // Right
-    outFrustum.Planes[4] = GetPlane(inFrustum.Corners[2], inFrustum.Corners[6], inFrustum.Corners[7]); // Top
-    outFrustum.Planes[5] = GetPlane(inFrustum.Corners[1], inFrustum.Corners[0], inFrustum.Corners[4]); // Bottom
+    outFrustum.Planes[0] = GetPlane(inFrustum.Corners[2], inFrustum.Corners[1], inFrustum.Corners[0]); // Near
+    outFrustum.Planes[1] = GetPlane(inFrustum.Corners[4], inFrustum.Corners[5], inFrustum.Corners[6]); // Far
+    outFrustum.Planes[2] = GetPlane(inFrustum.Corners[7], inFrustum.Corners[3], inFrustum.Corners[0]); // Left
+    outFrustum.Planes[3] = GetPlane(inFrustum.Corners[6], inFrustum.Corners[5], inFrustum.Corners[1]); // Right
+    outFrustum.Planes[4] = GetPlane(inFrustum.Corners[7], inFrustum.Corners[6], inFrustum.Corners[2]); // Top
+    outFrustum.Planes[5] = GetPlane(inFrustum.Corners[4], inFrustum.Corners[0], inFrustum.Corners[1]); // Bottom
     return outFrustum;
 }
 
@@ -26,7 +26,8 @@ bool CameraBase::IsPointInFrustum(const ViewFrustumPlanes& inFrustum, const glm:
 {
     for(int i = 0; i < 6; ++i)
     {
-        if(glm::dot(inFrustum.Planes[i], glm::vec4(inPoint, 1.0f)) > 0)
+        float dis = glm::dot(inFrustum.Planes[i], glm::vec4(inPoint, 1.0f));
+        if(dis > 0)
         {
             return false;
         }
@@ -46,13 +47,14 @@ bool CameraBase::IsAABBInFrustum(const ViewFrustumPlanes& inFrustum, const glm::
     corners[6] = glm::vec3(inMin.x, inMax.y, inMax.z);
     corners[7] = glm::vec3(inMax.x, inMax.y, inMax.z);
     
-    // if all the 8 points in the same outside of a plane, then the AABB is outside of the frustum
+    // if all the 8 points in the same outside a plane, then the AABB is outside the frustum
     for (int i = 0; i < 6; i++)
     {
         int outCount = 8;
         for (int j = 0; j < 8; j++)
         {
-            if (glm::dot(inFrustum.Planes[i], glm::vec4(corners[j], 1.0f)) > 0)
+            float dis = glm::dot(inFrustum.Planes[i], glm::vec4(corners[j], 1.0f));
+            if (dis > 0)
             {
                 outCount--;
             }
@@ -70,7 +72,8 @@ bool CameraBase::IsSphereInFrustum(const ViewFrustumPlanes& inFrustum, const glm
 {
     for (int i = 0; i < 6; i++)
     {
-        if (glm::dot(inFrustum.Planes[i], glm::vec4(inCenter, 1.0f)) > inRadius)
+        float dis = glm::dot(inFrustum.Planes[i], glm::vec4(inCenter, 1.0f));
+        if (dis > inRadius)
         {
             return false;
         }
@@ -129,13 +132,15 @@ glm::mat4 CameraPerspective::GetProjectionMatrix() const
 
 void CameraPerspective::GetViewFrustum(ViewFrustum& outFrustum) const
 {
+    float nearPlaneHalfHeight = glm::tan(glm::radians(Fov) / 2) * Near;
+    float nearPlaneHalfWidth = nearPlaneHalfHeight * AspectRatio;
     float farPlaneHalfHeight = glm::tan(glm::radians(Fov) / 2) * Far;
     float farPlaneHalfWidth = farPlaneHalfHeight * AspectRatio;
     
-    outFrustum.Corners[0] = glm::vec3(-farPlaneHalfWidth, -farPlaneHalfHeight, Near); // near bottom left
-    outFrustum.Corners[1] = glm::vec3(farPlaneHalfWidth, -farPlaneHalfHeight, Near); // near bottom right
-    outFrustum.Corners[2] = glm::vec3(farPlaneHalfWidth, farPlaneHalfHeight, Near); // near top right
-    outFrustum.Corners[3] = glm::vec3(-farPlaneHalfWidth, farPlaneHalfHeight, Near); // near top left
+    outFrustum.Corners[0] = glm::vec3(-nearPlaneHalfWidth, -nearPlaneHalfHeight, Near); // near bottom left
+    outFrustum.Corners[1] = glm::vec3(nearPlaneHalfWidth, -nearPlaneHalfHeight, Near); // near bottom right
+    outFrustum.Corners[2] = glm::vec3(nearPlaneHalfWidth, nearPlaneHalfHeight, Near); // near top right
+    outFrustum.Corners[3] = glm::vec3(-nearPlaneHalfWidth, nearPlaneHalfHeight, Near); // near top left
     outFrustum.Corners[4] = glm::vec3(-farPlaneHalfWidth, -farPlaneHalfHeight, Far); // far bottom left
     outFrustum.Corners[5] = glm::vec3(farPlaneHalfWidth, -farPlaneHalfHeight, Far); // far bottom right
     outFrustum.Corners[6] = glm::vec3(farPlaneHalfWidth, farPlaneHalfHeight, Far); // far top right

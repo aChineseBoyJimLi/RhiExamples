@@ -1,15 +1,17 @@
-#include "GraphicsPipelineVk.h"
+#include "MeshPipelineVk.h"
 #include <array>
 
-bool GraphicsPipelineVk::CreateDescriptorLayout()
+bool MeshPipelineVk::CreateDescriptorLayout()
 {
+	// Create descriptor set layout for graphics pass ---------------------
+	// Descriptor Set 0 Layout
     std::vector<VkDescriptorSetLayoutBinding> bindings;
-    bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 0), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}); // _CameraData
-    bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 1), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _LightData
-    bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}); // _InstanceData
-    bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 1), VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex
-    bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 6), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MaterialData
-    bindings.push_back({GetBindingSlot(ERegisterType::Sampler, 0), VK_DESCRIPTOR_TYPE_SAMPLER, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex_Sampler
+	bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 0), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}); // _CameraData
+	bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 1), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _LightData
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}); // _InstanceData
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 1), VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 6), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MaterialData
+	bindings.push_back({GetBindingSlot(ERegisterType::Sampler, 0), VK_DESCRIPTOR_TYPE_SAMPLER, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex_Sampler
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -19,15 +21,57 @@ bool GraphicsPipelineVk::CreateDescriptorLayout()
     VkResult result = vkCreateDescriptorSetLayout(m_DeviceHandle, &layoutInfo, nullptr, &m_DescriptorLayout);
     if(result != VK_SUCCESS)
     {
-        Log::Error("Failed to create descriptor set layout");
+        Log::Error("Failed to create descriptor set 0 layout");
         return false;
     }
-    
+
+	// Descriptor Set 1 Layout
+	std::vector<VkDescriptorSetLayoutBinding> bindings1;
+	bindings1.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings1.size());
+	layoutInfo.pBindings = bindings1.data();
+
+	result = vkCreateDescriptorSetLayout(m_DeviceHandle, &layoutInfo, nullptr, &m_DescriptorLayoutSpace1);
+	if(result != VK_SUCCESS)
+	{
+		Log::Error("Failed to create descriptor set 1 layout");
+		return false;
+	}
+	
+	// Create descriptor layout for culling pass ------------------------
+	std::vector<VkDescriptorSetLayoutBinding> cullingPassBindings;
+	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 0), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _CameraData
+	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 1), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _ViewFrustum
+	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 2), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _AABB
+	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _InstancesData
+	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::UnorderedAccess, 0), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _IndirectCommands
+	
+	layoutInfo.bindingCount = static_cast<uint32_t>(cullingPassBindings.size());
+	layoutInfo.pBindings = cullingPassBindings.data();
+	
+
+	result = vkCreateDescriptorSetLayout(m_DeviceHandle, &layoutInfo, nullptr, &m_CullingPassDescriptorSetLayout);
+	if(result != VK_SUCCESS)
+	{
+		Log::Error("Failed to create descriptor set layout  for culling pass");
+		return false;
+	}
+	
     return true;
 }
 
-void GraphicsPipelineVk::DestroyDescriptorLayout()
+void MeshPipelineVk::DestroyDescriptorLayout()
 {
+	if(m_CullingPassDescriptorSetLayout != VK_NULL_HANDLE)
+	{
+		vkDestroyDescriptorSetLayout(m_DeviceHandle, m_CullingPassDescriptorSetLayout, nullptr);
+		m_CullingPassDescriptorSetLayout = VK_NULL_HANDLE;
+	}
+	if(m_DescriptorLayoutSpace1 != VK_NULL_HANDLE)
+	{
+		vkDestroyDescriptorSetLayout(m_DeviceHandle, m_DescriptorLayoutSpace1, nullptr);
+		m_DescriptorLayoutSpace1 = VK_NULL_HANDLE;
+	}
     if(m_DescriptorLayout != VK_NULL_HANDLE)
     {
         vkDestroyDescriptorSetLayout(m_DeviceHandle, m_DescriptorLayout, nullptr);
@@ -35,7 +79,7 @@ void GraphicsPipelineVk::DestroyDescriptorLayout()
     }
 }
 
-bool GraphicsPipelineVk::CreateShader()
+bool MeshPipelineVk::CreateShader()
 {
     m_VertexShaderBlob = AssetsManager::LoadShaderImmediately("Graphics.vs.spv");
     if(!m_VertexShaderBlob || m_VertexShaderBlob->IsEmpty())
@@ -49,6 +93,12 @@ bool GraphicsPipelineVk::CreateShader()
         Log::Error("Failed to load pixel shader");
         return false;
     }
+	m_ComputeShaderBlob = AssetsManager::LoadShaderImmediately("VisibleCulling2.cs.spv");
+	if(!m_ComputeShaderBlob || m_ComputeShaderBlob->IsEmpty())
+	{
+		Log::Error("Failed to load compute shader");
+		return false;
+	}
 
     VkShaderModuleCreateInfo shaderInfo{};
     shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -69,12 +119,27 @@ bool GraphicsPipelineVk::CreateShader()
 		Log::Error("Failed to create pixel shader");
 		return false;
 	}
+
+	shaderInfo.codeSize = m_ComputeShaderBlob->GetSize();
+	shaderInfo.pCode = reinterpret_cast<const uint32_t*>(m_ComputeShaderBlob->GetData());
+	result = vkCreateShaderModule(m_DeviceHandle, &shaderInfo, nullptr, &m_ComputeShaderModule);
+	if(result != VK_SUCCESS)
+	{
+		Log::Error("Failed to create compute shader");
+		return false;
+	}
 	
     return true;
 }
 
-void GraphicsPipelineVk::DestroyShader()
+void MeshPipelineVk::DestroyShader()
 {
+	if(m_ComputeShaderModule != VK_NULL_HANDLE)
+	{
+		vkDestroyShaderModule(m_DeviceHandle, m_ComputeShaderModule, nullptr);
+		m_ComputeShaderModule = VK_NULL_HANDLE;
+	}
+	
     if(m_VertexShaderModule != VK_NULL_HANDLE)
     {
         vkDestroyShaderModule(m_DeviceHandle, m_VertexShaderModule, nullptr);
@@ -88,7 +153,7 @@ void GraphicsPipelineVk::DestroyShader()
     }
 }
 
-bool GraphicsPipelineVk::CreateRenderPass()
+bool MeshPipelineVk::CreateRenderPass()
 {
     VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = s_BackBufferFormat;
@@ -152,7 +217,7 @@ bool GraphicsPipelineVk::CreateRenderPass()
     return true;
 }
 
-void GraphicsPipelineVk::DestroyRenderPass()
+void MeshPipelineVk::DestroyRenderPass()
 {
     if(m_RenderPassHandle != VK_NULL_HANDLE)
     {
@@ -161,8 +226,9 @@ void GraphicsPipelineVk::DestroyRenderPass()
     }
 }
 
-bool GraphicsPipelineVk::CreatePipelineState()
+bool MeshPipelineVk::CreatePipelineState()
 {
+	// Create pipeline state for graphics pass --------------------------
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
@@ -281,12 +347,53 @@ bool GraphicsPipelineVk::CreatePipelineState()
 		Log::Error("Failed to create pipeline");
 		return false;
 	}
+
+	// Create pipeline state for culling pass ---------------------------
+	pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = &m_CullingPassDescriptorSetLayout;
+	result = vkCreatePipelineLayout(m_DeviceHandle, &pipelineLayoutInfo, nullptr, &m_CullingPassPipelineLayout);
+	if(result != VK_SUCCESS)
+	{
+		Log::Error("Failed to create culling pass pipeline layout");
+		return false;
+	}
+
+	VkComputePipelineCreateInfo computePipelineInfo{};
+	computePipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	computePipelineInfo.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	computePipelineInfo.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+	computePipelineInfo.stage.module = m_ComputeShaderModule;
+	computePipelineInfo.stage.pName = "main";
+	computePipelineInfo.stage.pSpecializationInfo = nullptr;
+	computePipelineInfo.stage.flags = 0;
+	computePipelineInfo.stage.pNext = nullptr;
+	computePipelineInfo.layout = m_CullingPassPipelineLayout;
+	computePipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+	computePipelineInfo.basePipelineIndex = -1;
+	result = vkCreateComputePipelines(m_DeviceHandle, VK_NULL_HANDLE, 1,  &computePipelineInfo, nullptr, &m_CullingPassPipelineState);
+	if(result != VK_SUCCESS)
+	{
+		Log::Error("Failed to create culling pass pipeline layout");
+		return false;
+	}
 	
 	return true;
 }
 
-void GraphicsPipelineVk::DestroyPipelineState()
+void MeshPipelineVk::DestroyPipelineState()
 {
+	if(m_CullingPassPipelineState != VK_NULL_HANDLE)
+	{
+		vkDestroyPipeline(m_DeviceHandle, m_CullingPassPipelineState, nullptr);
+		m_CullingPassPipelineState = VK_NULL_HANDLE;
+	}
+	
+	if(m_CullingPassPipelineLayout != VK_NULL_HANDLE)
+	{
+		vkDestroyPipelineLayout(m_DeviceHandle, m_CullingPassPipelineLayout, nullptr);
+		m_CullingPassPipelineLayout = VK_NULL_HANDLE;
+	}
+	
 	if(m_PipelineState != VK_NULL_HANDLE)
 	{
 		vkDestroyPipeline(m_DeviceHandle, m_PipelineState, nullptr);

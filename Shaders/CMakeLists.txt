@@ -71,17 +71,47 @@ foreach(shader ${ShaderSrc})
         set(shader_output "${SHADER_OUTPUT_DIRECTORY}/${shader_name}.spv")
         # compile shader to spirv
         if("${shader_type}" STREQUAL "lib")
-            set(shader_command ${dxc_spirv_path} -spirv  -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi)
+            set(shader_command ${dxc_spirv_path} -spirv  -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -D SPIRV
+                -fspv-target-env=vulkan1.3
+                -fvk-t-shift ${srvOffset} all 
+                -fvk-s-shift ${samplerOffset} all
+                -fvk-b-shift ${cbvOffset} all 
+                -fvk-u-shift ${uavOffset} all)
         elseif("${shader_type}" STREQUAL "rgen")
-            set(shader_command ${dxc_spirv_path} -spirv -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -fspv-target-env=vulkan1.1spirv1.4 -fspv-extension=SPV_KHR_ray_tracing -fspv-extension=SPV_KHR_ray_query -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0)
+            set(shader_command ${dxc_spirv_path} -spirv -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -D SPIRV
+                -fspv-target-env=vulkan1.3 -fspv-extension=SPV_KHR_ray_tracing -fspv-extension=SPV_KHR_ray_query 
+                -fvk-t-shift ${srvOffset} all 
+                -fvk-s-shift ${samplerOffset} all
+                -fvk-b-shift ${cbvOffset} all 
+                -fvk-u-shift ${uavOffset} all)
         elseif("${shader_type}" STREQUAL "rmis")
-            set(shader_command ${dxc_spirv_path} -spirv -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -fspv-target-env=vulkan1.1spirv1.4 -fspv-extension=SPV_KHR_ray_tracing -fspv-extension=SPV_KHR_ray_query -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0)
+            set(shader_command ${dxc_spirv_path} -spirv -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -D SPIRV
+                -fspv-target-env=vulkan1.3 -fspv-extension=SPV_KHR_ray_tracing -fspv-extension=SPV_KHR_ray_query 
+                -fvk-t-shift ${srvOffset} all 
+                -fvk-s-shift ${samplerOffset} all
+                -fvk-b-shift ${cbvOffset} all 
+                -fvk-u-shift ${uavOffset} all)
         elseif("${shader_type}" STREQUAL "rhit")
-            set(shader_command ${dxc_spirv_path} -spirv -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -fspv-target-env=vulkan1.1spirv1.4 -fspv-extension=SPV_KHR_ray_tracing -fspv-extension=SPV_KHR_ray_query -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0)
+            set(shader_command ${dxc_spirv_path} -spirv -T lib_6_5 -Fo ${shader_output} ${shader} -Od -Zi -D SPIRV
+                -fspv-target-env=vulkan1.3 -fspv-extension=SPV_KHR_ray_tracing -fspv-extension=SPV_KHR_ray_query 
+                -fvk-t-shift ${srvOffset} all 
+                -fvk-s-shift ${samplerOffset} all 
+                -fvk-b-shift ${cbvOffset} all 
+                -fvk-u-shift ${uavOffset} all)
         elseif("${shader_type}" STREQUAL "ms")
-            set(shader_command ${dxc_spirv_path} -spirv  -T ms_6_5 -Fo ${shader_output} -E main ${shader} -Od -Zi -fspv-target-env=vulkan1.1spirv1.4 -fspv-extension=SPV_EXT_mesh_shader -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0)
+            set(shader_command ${dxc_spirv_path} -spirv  -T ms_6_5 -Fo ${shader_output} -E main ${shader} -Od -Zi -D SPIRV
+                -fspv-target-env=vulkan1.3 -fspv-extension=SPV_EXT_mesh_shader 
+                -fvk-t-shift ${srvOffset} all 
+                -fvk-s-shift ${samplerOffset} all
+                -fvk-b-shift ${cbvOffset} all 
+                -fvk-u-shift ${uavOffset} all)
         else()
-            set(shader_command  ${dxc_spirv_path} -spirv -T ${shader_type}_6_5 -Fo ${shader_output} -E main ${shader} -Od -Zi -fvk-t-shift ${srvOffset} 0 -fvk-s-shift ${samplerOffset} 0 -fvk-b-shift ${cbvOffset} 0 -fvk-u-shift ${uavOffset} 0) 
+            set(shader_command  ${dxc_spirv_path} -spirv -T ${shader_type}_6_5 -Fo ${shader_output} -E main ${shader} -Od -Zi -D SPIRV
+                -fspv-target-env=vulkan1.3 
+                -fvk-t-shift ${srvOffset} all 
+                -fvk-s-shift ${samplerOffset} all
+                -fvk-b-shift ${cbvOffset} all 
+                -fvk-u-shift ${uavOffset} all)
         endif()
 
         add_custom_command(
