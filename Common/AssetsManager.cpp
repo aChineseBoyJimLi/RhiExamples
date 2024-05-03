@@ -144,6 +144,91 @@ namespace AssetsManager
         return true;
     }
 
+    bool Mesh::ComputeMeshlets(std::vector<DirectX::Meshlet>& outMeshlets
+                            , std::vector<uint8_t>& outUniqueVertexIndices
+                            , std::vector<DirectX::MeshletTriangle>& outPackedPrimitiveIndices
+                            , std::vector<DirectX::CullData>& outMeshletCullData) const
+    {
+        if(m_Mesh == nullptr || m_Mesh->mNumVertices == 0 || m_Mesh->mNumFaces == 0)
+        {
+            Log::Error("Mesh is empty");
+            return false;
+        }
+        
+        std::vector<DirectX::XMFLOAT3> vertices(m_Mesh->mNumVertices);
+        for(uint32_t i = 0; i < m_Mesh->mNumVertices; i++)
+        {
+            vertices[i] = DirectX::XMFLOAT3(m_Mesh->mVertices[i].x, m_Mesh->mVertices[i].y, m_Mesh->mVertices[i].z);
+        }
+        
+        std::vector<uint32_t> indices;
+        for(uint32_t i = 0; i < m_Mesh->mNumFaces; i++)
+        {
+            const aiFace& Face = m_Mesh->mFaces[i];
+            for(uint32_t j = 0; j < Face.mNumIndices; j++)
+            {
+                indices.push_back(Face.mIndices[j]);
+            }
+        }
+
+        HRESULT hr = DirectX::ComputeMeshlets(indices.data()
+            , m_Mesh->mNumFaces
+            , vertices.data()
+            , vertices.size()
+            , nullptr
+            , outMeshlets
+            , outUniqueVertexIndices
+            , outPackedPrimitiveIndices);
+
+        if(FAILED(hr))
+        {
+            Log::Error("Failed to compute meshlets");
+            return false;
+        }
+
+        outMeshletCullData.resize(outMeshlets.size());
+        
+        hr = DirectX::ComputeCullData(vertices.data()
+            , vertices.size()
+            , outMeshlets.data()
+            , outMeshlets.size()
+            , reinterpret_cast<const uint32_t*>(outUniqueVertexIndices.data()) // index buffer is uint32_t, so cast uniqueVertexIndices to uint32_t*
+            , outUniqueVertexIndices.size() / 4
+            , outPackedPrimitiveIndices.data()
+            , outPackedPrimitiveIndices.size()
+            , outMeshletCullData.data());
+
+        if(FAILED(hr))
+        {
+            Log::Error("Failed to compute meshlets cull data");
+            return false;
+        }
+        
+        return true;
+    }
+
+    void Mesh::GetPositionData(std::vector<glm::vec4> &outPositions) const
+    {
+        if(m_Mesh == nullptr)
+            return ;
+        outPositions.resize(m_Mesh->mNumVertices);
+        for(uint32_t i = 0; i < m_Mesh->mNumVertices; i++)
+        {
+            outPositions[i] = glm::vec4(m_Mesh->mVertices[i].x, m_Mesh->mVertices[i].y, m_Mesh->mVertices[i].z, 1.0f);
+        }
+    }
+        
+    void Mesh::GetTexCoord0Data(std::vector<glm::vec2> &outTexCoords) const
+    {
+        if(m_Mesh == nullptr || !m_Mesh->HasTextureCoords(0))
+            return ;
+        outTexCoords.resize(m_Mesh->mNumVertices);
+        for(uint32_t i = 0; i < m_Mesh->mNumVertices; i++)
+        {
+            outTexCoords[i] = glm::vec2(m_Mesh->mTextureCoords[0][i].x, m_Mesh->mTextureCoords[0][i].y);
+        }
+    }
+
     Texture::Texture(bool sRGB)
         : m_sRGB(sRGB)
     {

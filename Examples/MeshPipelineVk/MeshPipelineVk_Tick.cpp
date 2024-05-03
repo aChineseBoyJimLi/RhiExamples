@@ -15,13 +15,6 @@ void MeshPipelineVk::UpdateConstants()
         viewFrustumCB.Corners[i] = glm::vec4(viewFrustum.Corners[i], 1.0f);
     }
     WriteBufferData(m_DeviceHandle, m_ViewFrustumBufferMemory, &viewFrustumCB, ViewFrustumCB::GetAlignedByteSizes());
-    
-    
-    DirectionalLightData lightData;
-    lightData.LightColor = m_Light.Color;
-    lightData.LightDirection = m_Light.Transform.GetWorldForward();
-    lightData.LightIntensity = m_Light.Intensity;
-    WriteBufferData(m_DeviceHandle, m_LightDataMemory, &lightData, DirectionalLightData::GetAlignedByteSizes());
 }
 
 void MeshPipelineVk::Tick()
@@ -33,13 +26,7 @@ void MeshPipelineVk::Tick()
 
     BeginCommandList();
     UpdateConstants();
-
-    // culling pass
-    vkCmdBindPipeline(m_CmdBufferHandle, VK_PIPELINE_BIND_POINT_COMPUTE, m_CullingPassPipelineState);
-    vkCmdBindDescriptorSets(m_CmdBufferHandle, VK_PIPELINE_BIND_POINT_COMPUTE, m_CullingPassPipelineLayout, 0, 1, &m_CullingPassDescriptorSet, 0, nullptr);
-    vkCmdDispatch(m_CmdBufferHandle, s_InstancesCount / s_ThreadGroupSize, 1, 1);
     
-    // graphics pass
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = m_RenderPassHandle;
@@ -73,13 +60,7 @@ void MeshPipelineVk::Tick()
         vkCmdBindPipeline(m_CmdBufferHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineState);
         vkCmdBindDescriptorSets(m_CmdBufferHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSet, 0, nullptr);
 
-        VkBuffer vertexBuffers[] = { m_VerticesBuffer };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(m_CmdBufferHandle, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(m_CmdBufferHandle, m_IndicesBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-        // vkCmdDrawIndexed(m_CmdBufferHandle, m_Mesh->GetIndicesCount(), s_InstancesCount, 0, 0, 0);
-        vkCmdDrawIndexedIndirect(m_CmdBufferHandle, m_IndirectCommandsBuffer, 0, s_InstancesCount, sizeof(VkDrawIndexedIndirectCommand));
+        vkCmdDrawMeshTasksEXT(m_CmdBufferHandle, m_GroupCount, 1, 1);
     }
     vkCmdEndRenderPass(m_CmdBufferHandle);
     EndCommandList();

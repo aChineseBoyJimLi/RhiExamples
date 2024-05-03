@@ -6,6 +6,9 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
+#include <glm/glm.hpp>
+
 #include "DirectXMesh.h"
 #include "DirectXTex.h"
 #include "Log.h"
@@ -33,6 +36,8 @@ namespace AssetsManager
         size_t m_Size;
     };
 
+    
+
     class Mesh
     {
     public:
@@ -50,6 +55,15 @@ namespace AssetsManager
         bool            ComputeMeshlets(std::vector<DirectX::Meshlet>& outMeshlets
                             , std::vector<uint8_t>& outUniqueVertexIndices
                             , std::vector<DirectX::MeshletTriangle>& outPackedPrimitiveIndices) const;
+
+        bool            ComputeMeshlets(std::vector<DirectX::Meshlet>& outMeshlets
+                            , std::vector<uint8_t>& outUniqueVertexIndices
+                            , std::vector<DirectX::MeshletTriangle>& outPackedPrimitiveIndices
+                            , std::vector<DirectX::CullData>& outMeshletCullData) const;
+
+        void            GetPositionData(std::vector<glm::vec4> &outPositions) const;
+        
+        void            GetTexCoord0Data(std::vector<glm::vec2> &outTexCoords) const;
 
         const void*     GetPositionData() const { return m_Mesh ? m_Mesh->mVertices : nullptr; }
         size_t          GetPositionDataByteSize() const { return m_Mesh ? m_Mesh->mNumVertices * sizeof(aiVector3D) : 0; }

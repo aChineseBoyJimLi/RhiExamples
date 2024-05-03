@@ -68,15 +68,15 @@ void Win32Base::Run()
     // Main Loop
     auto lastTime = std::chrono::high_resolution_clock::now();
     auto startTime = std::chrono::high_resolution_clock::now();
-    m_IsRunning = true;
     MSG Msg = { 0 };
-    while (m_IsRunning)
+    while (true)
     {
         if (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE))
         {
             if (Msg.message == WM_QUIT)
             {
                 m_IsRunning = false;
+                break;
             }
             TranslateMessage(&Msg);
             DispatchMessageW(&Msg);
@@ -104,7 +104,7 @@ LRESULT CALLBACK Win32Base::MsgProc(HWND HWnd, UINT Msg, WPARAM WParam, LPARAM L
     case WM_DESTROY: 
         PostQuitMessage(0);
         break;
-
+    
     case WM_ENTERSIZEMOVE:
         break;
 
@@ -113,9 +113,12 @@ LRESULT CALLBACK Win32Base::MsgProc(HWND HWnd, UINT Msg, WPARAM WParam, LPARAM L
 
     case WM_SIZE:
         for (auto i : s_Listeners)
+        {
+            i->m_IsRunning = WParam == SIZE_MINIMIZED ? false : true;
             i->OnResize(LOWORD(LParam), HIWORD(LParam));
+        }
         break;
-
+        
     case WM_LBUTTONDOWN:
         for (auto i : s_Listeners)
             i->OnMouseLeftBtnDown(GET_X_LPARAM(LParam), GET_Y_LPARAM(LParam));

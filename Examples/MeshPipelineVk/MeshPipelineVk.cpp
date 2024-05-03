@@ -16,7 +16,10 @@ static const std::vector<const char*> s_InstanceExtensions = {
 };
 
 static const std::vector<const char*> s_DeviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_KHR_SPIRV_1_4_EXTENSION_NAME,
+    VK_EXT_MESH_SHADER_EXTENSION_NAME,
+    VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME
 };
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity
@@ -261,11 +264,15 @@ bool MeshPipelineVk::CreateDevice()
     queueCreateInfo.pQueuePriorities = queuePriority;
 
     // Create logical device
+    VkPhysicalDeviceMeshShaderFeaturesEXT enableMeshShaderFeature{};
+    enableMeshShaderFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
+    enableMeshShaderFeature.taskShader = VK_TRUE;
+    enableMeshShaderFeature.meshShader = VK_TRUE;
+    
     VkPhysicalDeviceFeatures2 deviceFeatures2{};
     deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     deviceFeatures2.features = m_GpuFeatures;
-    deviceFeatures2.pNext = nullptr; // No device extensions so far
-    
+    deviceFeatures2.pNext = &enableMeshShaderFeature; // enable mesh shader feature
     
     VkDeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -290,6 +297,8 @@ bool MeshPipelineVk::CreateDevice()
     }
 
     vkGetDeviceQueue(m_DeviceHandle, m_QueueIndex, 0, &m_QueueHandle);
+
+    vkCmdDrawMeshTasksEXT = reinterpret_cast<PFN_vkCmdDrawMeshTasksEXT>(vkGetDeviceProcAddr(m_DeviceHandle, "vkCmdDrawMeshTasksEXT"));
     
     return true;
 }

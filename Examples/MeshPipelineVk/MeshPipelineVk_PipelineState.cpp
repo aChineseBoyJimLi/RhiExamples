@@ -3,15 +3,17 @@
 
 bool MeshPipelineVk::CreateDescriptorLayout()
 {
-	// Create descriptor set layout for graphics pass ---------------------
-	// Descriptor Set 0 Layout
     std::vector<VkDescriptorSetLayoutBinding> bindings;
-	bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 0), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}); // _CameraData
-	bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 1), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _LightData
-	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}); // _InstanceData
-	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 1), VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex
-	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 6), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MaterialData
-	bindings.push_back({GetBindingSlot(ERegisterType::Sampler, 0), VK_DESCRIPTOR_TYPE_SAMPLER, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex_Sampler
+	bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 0), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _CameraData
+	bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 1), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _ViewFrustum
+	bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 2), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _MeshInfo
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _Vertices
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 1), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _TexCoords
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 2), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _Meshlets
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 3), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _PackedPrimitiveIndices
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 4), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _UniqueVertexIndices
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 5), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _MeshletCullData
+	bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 6), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT, nullptr}); // _InstanceData
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -21,57 +23,15 @@ bool MeshPipelineVk::CreateDescriptorLayout()
     VkResult result = vkCreateDescriptorSetLayout(m_DeviceHandle, &layoutInfo, nullptr, &m_DescriptorLayout);
     if(result != VK_SUCCESS)
     {
-        Log::Error("Failed to create descriptor set 0 layout");
+        Log::Error("Failed to create descriptor set layout");
         return false;
     }
-
-	// Descriptor Set 1 Layout
-	std::vector<VkDescriptorSetLayoutBinding> bindings1;
-	bindings1.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings1.size());
-	layoutInfo.pBindings = bindings1.data();
-
-	result = vkCreateDescriptorSetLayout(m_DeviceHandle, &layoutInfo, nullptr, &m_DescriptorLayoutSpace1);
-	if(result != VK_SUCCESS)
-	{
-		Log::Error("Failed to create descriptor set 1 layout");
-		return false;
-	}
-	
-	// Create descriptor layout for culling pass ------------------------
-	std::vector<VkDescriptorSetLayoutBinding> cullingPassBindings;
-	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 0), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _CameraData
-	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 1), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _ViewFrustum
-	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 2), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _AABB
-	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _InstancesData
-	cullingPassBindings.push_back({GetBindingSlot(ERegisterType::UnorderedAccess, 0), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}); // _IndirectCommands
-	
-	layoutInfo.bindingCount = static_cast<uint32_t>(cullingPassBindings.size());
-	layoutInfo.pBindings = cullingPassBindings.data();
-	
-
-	result = vkCreateDescriptorSetLayout(m_DeviceHandle, &layoutInfo, nullptr, &m_CullingPassDescriptorSetLayout);
-	if(result != VK_SUCCESS)
-	{
-		Log::Error("Failed to create descriptor set layout  for culling pass");
-		return false;
-	}
 	
     return true;
 }
 
 void MeshPipelineVk::DestroyDescriptorLayout()
 {
-	if(m_CullingPassDescriptorSetLayout != VK_NULL_HANDLE)
-	{
-		vkDestroyDescriptorSetLayout(m_DeviceHandle, m_CullingPassDescriptorSetLayout, nullptr);
-		m_CullingPassDescriptorSetLayout = VK_NULL_HANDLE;
-	}
-	if(m_DescriptorLayoutSpace1 != VK_NULL_HANDLE)
-	{
-		vkDestroyDescriptorSetLayout(m_DeviceHandle, m_DescriptorLayoutSpace1, nullptr);
-		m_DescriptorLayoutSpace1 = VK_NULL_HANDLE;
-	}
     if(m_DescriptorLayout != VK_NULL_HANDLE)
     {
         vkDestroyDescriptorSetLayout(m_DeviceHandle, m_DescriptorLayout, nullptr);
@@ -81,51 +41,51 @@ void MeshPipelineVk::DestroyDescriptorLayout()
 
 bool MeshPipelineVk::CreateShader()
 {
-    m_VertexShaderBlob = AssetsManager::LoadShaderImmediately("Graphics.vs.spv");
-    if(!m_VertexShaderBlob || m_VertexShaderBlob->IsEmpty())
+    m_ASBlob = AssetsManager::LoadShaderImmediately("VisibleCulling.as.spv");
+    if(!m_ASBlob || m_ASBlob->IsEmpty())
     {
-        Log::Error("Failed to load vertex shader");
+        Log::Error("Failed to load task shader");
         return false;
     }
-    m_PixelShaderBlob = AssetsManager::LoadShaderImmediately("Graphics.ps.spv");
-    if(!m_PixelShaderBlob || m_PixelShaderBlob->IsEmpty())
+    m_MSBlob = AssetsManager::LoadShaderImmediately("MeshletViewer.ms.spv");
+    if(!m_MSBlob || m_MSBlob->IsEmpty())
     {
-        Log::Error("Failed to load pixel shader");
+        Log::Error("Failed to load mesh shader");
         return false;
     }
-	m_ComputeShaderBlob = AssetsManager::LoadShaderImmediately("VisibleCulling2.cs.spv");
-	if(!m_ComputeShaderBlob || m_ComputeShaderBlob->IsEmpty())
+	m_PSBlob = AssetsManager::LoadShaderImmediately("SolidColor.ps.spv");
+	if(!m_PSBlob || m_PSBlob->IsEmpty())
 	{
-		Log::Error("Failed to load compute shader");
+		Log::Error("Failed to load pixel shader");
 		return false;
 	}
 
     VkShaderModuleCreateInfo shaderInfo{};
     shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shaderInfo.codeSize = m_VertexShaderBlob->GetSize();
-    shaderInfo.pCode = reinterpret_cast<const uint32_t*>(m_VertexShaderBlob->GetData());
-    VkResult result = vkCreateShaderModule(m_DeviceHandle, &shaderInfo, nullptr, &m_VertexShaderModule);
+    shaderInfo.codeSize = m_ASBlob->GetSize();
+    shaderInfo.pCode = reinterpret_cast<const uint32_t*>(m_ASBlob->GetData());
+    VkResult result = vkCreateShaderModule(m_DeviceHandle, &shaderInfo, nullptr, &m_ASModule);
 	if(result != VK_SUCCESS)
 	{
-		Log::Error("Failed to create vertex shader");
+		Log::Error("Failed to create task shader");
 		return false;
 	}
 
-    shaderInfo.codeSize = m_PixelShaderBlob->GetSize();
-    shaderInfo.pCode = reinterpret_cast<const uint32_t*>(m_PixelShaderBlob->GetData());
-    result = vkCreateShaderModule(m_DeviceHandle, &shaderInfo, nullptr, &m_PixelShaderModule);
+	shaderInfo.codeSize = m_MSBlob->GetSize();
+	shaderInfo.pCode = reinterpret_cast<const uint32_t*>(m_MSBlob->GetData());
+	result = vkCreateShaderModule(m_DeviceHandle, &shaderInfo, nullptr, &m_MSModule);
+	if(result != VK_SUCCESS)
+	{
+		Log::Error("Failed to create mesh shader");
+		return false;
+	}
+
+    shaderInfo.codeSize = m_PSBlob->GetSize();
+    shaderInfo.pCode = reinterpret_cast<const uint32_t*>(m_PSBlob->GetData());
+    result = vkCreateShaderModule(m_DeviceHandle, &shaderInfo, nullptr, &m_PSModule);
 	if(result != VK_SUCCESS)
 	{
 		Log::Error("Failed to create pixel shader");
-		return false;
-	}
-
-	shaderInfo.codeSize = m_ComputeShaderBlob->GetSize();
-	shaderInfo.pCode = reinterpret_cast<const uint32_t*>(m_ComputeShaderBlob->GetData());
-	result = vkCreateShaderModule(m_DeviceHandle, &shaderInfo, nullptr, &m_ComputeShaderModule);
-	if(result != VK_SUCCESS)
-	{
-		Log::Error("Failed to create compute shader");
 		return false;
 	}
 	
@@ -134,22 +94,22 @@ bool MeshPipelineVk::CreateShader()
 
 void MeshPipelineVk::DestroyShader()
 {
-	if(m_ComputeShaderModule != VK_NULL_HANDLE)
+	if(m_ASModule != VK_NULL_HANDLE)
 	{
-		vkDestroyShaderModule(m_DeviceHandle, m_ComputeShaderModule, nullptr);
-		m_ComputeShaderModule = VK_NULL_HANDLE;
+		vkDestroyShaderModule(m_DeviceHandle, m_ASModule, nullptr);
+		m_ASModule = VK_NULL_HANDLE;
 	}
 	
-    if(m_VertexShaderModule != VK_NULL_HANDLE)
+    if(m_MSModule != VK_NULL_HANDLE)
     {
-        vkDestroyShaderModule(m_DeviceHandle, m_VertexShaderModule, nullptr);
-        m_VertexShaderModule = VK_NULL_HANDLE;
+        vkDestroyShaderModule(m_DeviceHandle, m_MSModule, nullptr);
+        m_MSModule = VK_NULL_HANDLE;
     }
 
-    if(m_PixelShaderModule != VK_NULL_HANDLE)
+    if(m_PSModule != VK_NULL_HANDLE)
     {
-        vkDestroyShaderModule(m_DeviceHandle, m_PixelShaderModule, nullptr);
-        m_PixelShaderModule = VK_NULL_HANDLE;
+        vkDestroyShaderModule(m_DeviceHandle, m_PSModule, nullptr);
+        m_PSModule = VK_NULL_HANDLE;
     }
 }
 
@@ -242,34 +202,11 @@ bool MeshPipelineVk::CreatePipelineState()
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages
 	{
-		{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0, VK_SHADER_STAGE_VERTEX_BIT, m_VertexShaderModule, "main", nullptr},
-		{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0, VK_SHADER_STAGE_FRAGMENT_BIT, m_PixelShaderModule, "main", nullptr}
+			{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0, VK_SHADER_STAGE_TASK_BIT_EXT, m_ASModule, "main", nullptr},
+		{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0, VK_SHADER_STAGE_MESH_BIT_EXT, m_MSModule, "main", nullptr},
+		{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0, VK_SHADER_STAGE_FRAGMENT_BIT, m_PSModule, "main", nullptr}
 	};
 	
-	std::vector<VkVertexInputAttributeDescription> attributeDescriptions
-	{
-		{0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},
-		{1, 0, VK_FORMAT_R32G32B32_SFLOAT, 12},
-		{2, 0, VK_FORMAT_R32G32_SFLOAT, 24}
-	};
-
-	VkVertexInputBindingDescription bindingDescription{};
-	bindingDescription.binding = 0;
-	bindingDescription.stride = sizeof(VertexData);
-	bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
-
 	VkPipelineViewportStateCreateInfo viewportState{};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
@@ -329,8 +266,8 @@ bool MeshPipelineVk::CreatePipelineState()
     pipelineInfo.pStages = shaderStages.data();
     pipelineInfo.renderPass = m_RenderPassHandle;
 	pipelineInfo.layout = m_PipelineLayout;
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
+	pipelineInfo.pVertexInputState = nullptr;
+	pipelineInfo.pInputAssemblyState = nullptr;
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
@@ -347,53 +284,12 @@ bool MeshPipelineVk::CreatePipelineState()
 		Log::Error("Failed to create pipeline");
 		return false;
 	}
-
-	// Create pipeline state for culling pass ---------------------------
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &m_CullingPassDescriptorSetLayout;
-	result = vkCreatePipelineLayout(m_DeviceHandle, &pipelineLayoutInfo, nullptr, &m_CullingPassPipelineLayout);
-	if(result != VK_SUCCESS)
-	{
-		Log::Error("Failed to create culling pass pipeline layout");
-		return false;
-	}
-
-	VkComputePipelineCreateInfo computePipelineInfo{};
-	computePipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-	computePipelineInfo.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	computePipelineInfo.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-	computePipelineInfo.stage.module = m_ComputeShaderModule;
-	computePipelineInfo.stage.pName = "main";
-	computePipelineInfo.stage.pSpecializationInfo = nullptr;
-	computePipelineInfo.stage.flags = 0;
-	computePipelineInfo.stage.pNext = nullptr;
-	computePipelineInfo.layout = m_CullingPassPipelineLayout;
-	computePipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-	computePipelineInfo.basePipelineIndex = -1;
-	result = vkCreateComputePipelines(m_DeviceHandle, VK_NULL_HANDLE, 1,  &computePipelineInfo, nullptr, &m_CullingPassPipelineState);
-	if(result != VK_SUCCESS)
-	{
-		Log::Error("Failed to create culling pass pipeline layout");
-		return false;
-	}
 	
 	return true;
 }
 
 void MeshPipelineVk::DestroyPipelineState()
 {
-	if(m_CullingPassPipelineState != VK_NULL_HANDLE)
-	{
-		vkDestroyPipeline(m_DeviceHandle, m_CullingPassPipelineState, nullptr);
-		m_CullingPassPipelineState = VK_NULL_HANDLE;
-	}
-	
-	if(m_CullingPassPipelineLayout != VK_NULL_HANDLE)
-	{
-		vkDestroyPipelineLayout(m_DeviceHandle, m_CullingPassPipelineLayout, nullptr);
-		m_CullingPassPipelineLayout = VK_NULL_HANDLE;
-	}
-	
 	if(m_PipelineState != VK_NULL_HANDLE)
 	{
 		vkDestroyPipeline(m_DeviceHandle, m_PipelineState, nullptr);

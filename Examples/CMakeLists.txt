@@ -2,7 +2,7 @@ add_subdirectory(ConsoleTest)
 # add_subdirectory(GraphicsPipelineDx)
 # add_subdirectory(IndirectDrawDx)
 # add_subdirectory(GpuQueryDx)
-# add_subdirectory(MeshPipelineDx)
+add_subdirectory(MeshPipelineDx)
 # add_subdirectory(RayTracingPipelineDx)
 # add_subdirectory(VariableRateShadingDx)
 
