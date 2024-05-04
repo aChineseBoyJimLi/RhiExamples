@@ -8,9 +8,9 @@ void RayTracingPipelineVk::UpdateConstants()
     WriteBufferData(m_DeviceHandle, m_CameraBufferMemory, &cameraData, CameraData::GetAlignedByteSizes());
 
     DirectionalLightData lightData;
-    lightData.LightColor = m_Light.Color;
-    lightData.LightDirection = m_Light.Transform.GetWorldForward();
-    lightData.LightIntensity = m_Light.Intensity;
+    lightData.LightColor = m_MainLight.Color;
+    lightData.LightDirection = m_MainLight.Transform.GetWorldForward();
+    lightData.LightIntensity = m_MainLight.Intensity;
     WriteBufferData(m_DeviceHandle, m_LightDataMemory, &lightData, DirectionalLightData::GetAlignedByteSizes());
 }
 
@@ -25,7 +25,9 @@ void RayTracingPipelineVk::Tick()
     UpdateConstants();
 
     // Ray tracing
-    
+    vkCmdBindPipeline(m_CmdBufferHandle, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, m_PipelineState);
+    vkCmdBindDescriptorSets(m_CmdBufferHandle, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, m_PipelineLayout, 0, 1, &m_DescriptorSet, 0, nullptr);
+    vkCmdTraceRaysKHR(m_CmdBufferHandle, &m_RaygenShaderSbtEntry, &m_MissShaderSbtEntry, &m_HitShaderSbtEntry, &m_CallableShaderSbtEntry, m_Capabilities.currentExtent.width, m_Capabilities.currentExtent.height, 1);
     
     // Copy the output image to the back buffer
     std::array<VkImageMemoryBarrier, 2> preCopyBarriers;

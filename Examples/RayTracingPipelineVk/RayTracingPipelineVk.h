@@ -8,6 +8,7 @@
 #include "AssetsManager.h"
 #include <array>
 
+
 struct InstanceData
 {
     glm::mat4 LocalToWorld;
@@ -21,27 +22,31 @@ struct InstanceData
 struct MaterialData
 {
     glm::vec4 Color;
-    float Smooth;
-    uint32_t TexIndex;
-    uint32_t Padding0;
-    uint32_t Padding1;
+    uint32_t TextureIndex;
+    uint32_t IsLambertian; // 0: Mirror reflection, 1: Lambertian
+    float Padding0;
+    float Padding1;
 };
 
-struct VertexData
+struct AABB
 {
-    glm::vec3 Position;
-    glm::vec3 Normal;
-    glm::vec2 TexCoord;
+    float MinX;
+    float MinY;
+    float MinZ;
+    float MaxX;
+    float MaxY;
+    float MaxZ; 
 };
 
 class RayTracingPipelineVk : public AppBaseVk
 {
 public:
     using AppBaseVk::AppBaseVk;
-    static constexpr uint32_t s_TexturesCount = 5;
-    static constexpr uint32_t s_InstancesCount = 1024;
-    static constexpr uint32_t s_MaterialCount = 100;
-    static constexpr VkFormat s_DepthStencilFormat = VK_FORMAT_D32_SFLOAT;
+    static constexpr uint32_t           s_MaxRayRecursionDepth = 3;
+    static constexpr uint32_t           s_TriangleMeshInstanceCount = 2;
+    static constexpr uint32_t           s_AABBMeshInstanceCount = 1;
+    static constexpr uint32_t           s_InstanceCount = s_TriangleMeshInstanceCount + s_AABBMeshInstanceCount;
+    static constexpr uint32_t           s_MaterialCount = 2;
     
 protected:
     bool Init() override;
@@ -59,6 +64,15 @@ private:
     PFN_vkCmdTraceRaysKHR                           vkCmdTraceRaysKHR;
     PFN_vkGetRayTracingShaderGroupHandlesKHR        vkGetRayTracingShaderGroupHandlesKHR;
     PFN_vkCreateRayTracingPipelinesKHR              vkCreateRayTracingPipelinesKHR;
+
+    VkDeviceAddress GetBufferDeviceAddress(VkBuffer inBuffer);
+    VkDeviceAddress GetAccelerationStructureDeviceAddress(VkAccelerationStructureKHR inAccelerationStructure);
+
+    void BuildAccelerationStructure(VkAccelerationStructureTypeKHR inType
+        , VkAccelerationStructureKHR inAcclerationStructure
+        , VkBuffer inScratchBuffer
+        , const VkAccelerationStructureGeometryKHR* inGeometry
+        , uint32_t inNumPrimitives);
     
     bool CreateDevice() override;
     void DestroyDevice() override;
@@ -66,31 +80,52 @@ private:
     void DestroyDescriptorLayout();
     bool CreateShader();
     void DestroyShader();
-
+    bool CreateShaderTable();
+    void DestroyShaderTable();
     bool CreatePipelineState();
     void DestroyPipelineState();
-
     bool CreateScene();
     bool CreateResources();
     void DestroyResources();
+    bool CreateBottomLevelAccelStructure();
+    void DestroyBottomLevelAccelStructure();
+    bool CreateTopLevelAccelStructure();
+    void DestroyTopLevelAccelStructure();
     bool CreateDescriptorSet();
     void DestroyDescriptorSet();
     void UpdateConstants();
     
-    VkDescriptorSetLayout                   m_DescriptorLayout;
-    VkPipelineLayout                        m_PipelineLayout;
-    VkPipeline                              m_PipelineState;
+    VkDescriptorSetLayout                               m_DescriptorLayout;
+    VkPipelineLayout                                    m_PipelineLayout;
+    VkPipeline                                          m_PipelineState;
+    std::shared_ptr<AssetsManager::Blob>                m_RayGenShaderBlob;
+    std::shared_ptr<AssetsManager::Blob>                m_MissShadersBlob;
+    std::shared_ptr<AssetsManager::Blob>                m_HitGroupShadersBlob;
+    VkShaderModule                                      m_RayGenShaderModule;
+    VkShaderModule                                      m_MissShaderModule;
+    VkShaderModule                                      m_ClosestHitShaderModule;
+    std::vector<VkRayTracingShaderGroupCreateInfoKHR>   m_ShaderGroups;
+    VkBuffer                                            m_ShaderTableBuffer;
+    VkDeviceMemory                                      m_ShaderTableBufferMemory;
+    VkStridedDeviceAddressRegionKHR                     m_RaygenShaderSbtEntry{};
+    VkStridedDeviceAddressRegionKHR                     m_MissShaderSbtEntry{};
+    VkStridedDeviceAddressRegionKHR                     m_HitShaderSbtEntry{};
+    VkStridedDeviceAddressRegionKHR                     m_CallableShaderSbtEntry{};
     
-    CameraPerspective                                                       m_Camera;
-    Light                                                                   m_Light;    
-    std::shared_ptr<AssetsManager::Mesh>                                    m_Mesh;
-    std::array<std::shared_ptr<AssetsManager::Texture>, s_TexturesCount>    m_Textures;
-    std::vector<VertexData>                                                 m_VerticesData;
-    std::array<InstanceData, s_InstancesCount>                              m_InstancesData;
-    std::array<MaterialData, s_MaterialCount>                               m_MaterialsData;
+    CameraPerspective                                   m_Camera;
+    Light                                               m_MainLight;    
+    std::shared_ptr<AssetsManager::Mesh>                m_Mesh;
+    std::vector<glm::vec2>                              m_TexCoord0Data;
+    std::vector<glm::vec4>                              m_NormalData;
+    std::array<Transform, s_InstanceCount>              m_InstancesTransform;
+    std::array<InstanceData, s_InstanceCount>           m_InstancesData;
+    std::array<MaterialData, s_MaterialCount>           m_MaterialsData;
+    std::array<AABB, s_AABBMeshInstanceCount>           m_AABB;
+    
 
     VkImage                     m_OutputImage;
     VkDeviceMemory              m_OutputImageMemory;
+    VkImageView                 m_OutputImageView;
 
     VkBuffer                    m_CameraDataBuffer;
     VkDeviceMemory              m_CameraBufferMemory;
@@ -104,11 +139,21 @@ private:
     VkDeviceMemory              m_VerticesBufferMemory;
     VkBuffer                    m_IndicesBuffer;
     VkDeviceMemory              m_IndicesBufferMemory;
-    std::array<VkImage,  s_TexturesCount>           m_MainTextures;
-    std::array<VkImageView, s_TexturesCount>        m_MainTextureViews;
-    std::array<VkDeviceMemory, s_TexturesCount>     m_MainTextureMemories;
-    std::array<VkSampler, s_TexturesCount>     m_MainTextureSamplers;
-    
+    VkBuffer                    m_TexcoordsBuffer;
+    VkDeviceMemory              m_TexcoordsBufferMemory;
+    VkBuffer                    m_NormalsBuffer;
+    VkDeviceMemory              m_NormalsBufferMemory;
+    VkBuffer                    m_AABBBuffer;
+    VkDeviceMemory              m_AABBBufferMemory;
+
+    VkBuffer                    m_BLASBuffer;
+    VkDeviceMemory              m_BLASBufferMemory;
+    VkAccelerationStructureKHR  m_BLAS;
+    VkBuffer                    m_ProceduralGeoBLASBuffer;
+    VkDeviceMemory              m_ProceduralGeoBLASBufferMemory;
+    VkAccelerationStructureKHR  m_ProceduralGeoBLAS;
+    VkBuffer                    m_TLASBuffer;
+    VkDeviceMemory              m_TLASBufferMemory;
+    VkAccelerationStructureKHR  m_TLAS;
     VkDescriptorSet             m_DescriptorSet;
-    
 };

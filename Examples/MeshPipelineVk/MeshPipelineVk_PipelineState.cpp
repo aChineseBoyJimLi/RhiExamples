@@ -202,7 +202,7 @@ bool MeshPipelineVk::CreatePipelineState()
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages
 	{
-			{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0, VK_SHADER_STAGE_TASK_BIT_EXT, m_ASModule, "main", nullptr},
+		{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0, VK_SHADER_STAGE_TASK_BIT_EXT, m_ASModule, "main", nullptr},
 		{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0, VK_SHADER_STAGE_MESH_BIT_EXT, m_MSModule, "main", nullptr},
 		{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, nullptr, 0, VK_SHADER_STAGE_FRAGMENT_BIT, m_PSModule, "main", nullptr}
 	};

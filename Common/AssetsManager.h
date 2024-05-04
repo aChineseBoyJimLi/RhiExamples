@@ -62,6 +62,8 @@ namespace AssetsManager
         
         void            GetTexCoord0Data(std::vector<glm::vec2> &outTexCoords) const;
 
+        void            GetNormalData(std::vector<glm::vec4> &outNormals) const;
+
         const void*     GetPositionData() const { return m_Mesh ? m_Mesh->mVertices : nullptr; }
         size_t          GetPositionDataByteSize() const { return m_Mesh ? m_Mesh->mNumVertices * sizeof(aiVector3D) : 0; }
         const void*     GetTexCoordData() const {return m_Mesh && m_Mesh->HasTextureCoords(0) ? m_Mesh->mTextureCoords[0] : nullptr; }

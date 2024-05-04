@@ -229,6 +229,17 @@ namespace AssetsManager
         }
     }
 
+    void Mesh::GetNormalData(std::vector<glm::vec4> &outNormals) const
+    {
+        if(m_Mesh == nullptr || !m_Mesh->HasNormals())
+            return ;
+        outNormals.resize(m_Mesh->mNumVertices);
+        for(uint32_t i = 0; i < m_Mesh->mNumVertices; i++)
+        {
+            outNormals[i] = glm::vec4(m_Mesh->mNormals[i].x, m_Mesh->mNormals[i].y, m_Mesh->mNormals[i].z, 0);
+        }
+    }
+
     Texture::Texture(bool sRGB)
         : m_sRGB(sRGB)
     {

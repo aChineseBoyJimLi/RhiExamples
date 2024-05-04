@@ -83,6 +83,9 @@ bool RayTracingPipelineVk::Init()
 
     if(!CreatePipelineState())
         return false;
+
+    if(!CreateShaderTable())
+        return false;
     
     if(!CreateScene())
         return false;
@@ -90,10 +93,14 @@ bool RayTracingPipelineVk::Init()
     if(!CreateResources())
         return false;
 
-    if(!CreateDescriptorSet())
-    {
+    if(!CreateBottomLevelAccelStructure())
         return false;
-    }
+
+    if(!CreateTopLevelAccelStructure())
+        return false;
+
+    if(!CreateDescriptorSet())
+        return false;
     
     return true;    
 }
@@ -101,7 +108,10 @@ bool RayTracingPipelineVk::Init()
 void RayTracingPipelineVk::Shutdown()
 {
     DestroyDescriptorSet();
+    DestroyTopLevelAccelStructure();
+    DestroyBottomLevelAccelStructure();
     DestroyResources();
+    DestroyShaderTable();
     DestroyPipelineState();
     DestroyShader();
     DestroyDescriptorLayout();
@@ -354,4 +364,50 @@ void RayTracingPipelineVk::DestroyDevice()
         vkDestroyInstance(m_InstanceHandle, nullptr);
         m_InstanceHandle = VK_NULL_HANDLE;
     }
+}
+
+VkDeviceAddress RayTracingPipelineVk::GetBufferDeviceAddress(VkBuffer inBuffer)
+{
+    VkBufferDeviceAddressInfoKHR bufferDeviceAI{};
+    bufferDeviceAI.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+    bufferDeviceAI.buffer = inBuffer;
+    return vkGetBufferDeviceAddressKHR(m_DeviceHandle, &bufferDeviceAI);
+}
+
+VkDeviceAddress RayTracingPipelineVk::GetAccelerationStructureDeviceAddress(VkAccelerationStructureKHR inAccelerationStructure)
+{
+    VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
+    accelerationDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+    accelerationDeviceAddressInfo.accelerationStructure = inAccelerationStructure;
+    return vkGetAccelerationStructureDeviceAddressKHR(m_DeviceHandle, &accelerationDeviceAddressInfo);
+}
+
+void RayTracingPipelineVk::BuildAccelerationStructure(VkAccelerationStructureTypeKHR inType
+        , VkAccelerationStructureKHR inAcclerationStructure
+        , VkBuffer inScratchBuffer
+        , const VkAccelerationStructureGeometryKHR* inGeometry
+        , uint32_t inNumPrimitives)
+{
+    VkAccelerationStructureBuildGeometryInfoKHR accelerationBuildGeometryInfo{};
+    accelerationBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+    accelerationBuildGeometryInfo.type = inType;
+    accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+    accelerationBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+    accelerationBuildGeometryInfo.dstAccelerationStructure = inAcclerationStructure;
+    accelerationBuildGeometryInfo.geometryCount = 1;
+    accelerationBuildGeometryInfo.pGeometries = inGeometry;
+    accelerationBuildGeometryInfo.scratchData.deviceAddress = GetBufferDeviceAddress(inScratchBuffer);
+    
+    VkAccelerationStructureBuildRangeInfoKHR accelerationStructureBuildRangeInfo{};
+    accelerationStructureBuildRangeInfo.primitiveCount = inNumPrimitives;
+    accelerationStructureBuildRangeInfo.primitiveOffset = 0;
+    accelerationStructureBuildRangeInfo.firstVertex = 0;
+    accelerationStructureBuildRangeInfo.transformOffset = 0;
+    std::vector<VkAccelerationStructureBuildRangeInfoKHR*> accelerationBuildStructureRangeInfos = { &accelerationStructureBuildRangeInfo };
+
+    vkCmdBuildAccelerationStructuresKHR(m_CmdBufferHandle
+        , 1
+        , &accelerationBuildGeometryInfo
+        , accelerationBuildStructureRangeInfos.data());
+
 }

@@ -39,11 +39,10 @@ void RayTracingPipelineDx::Tick()
     m_CommandList->SetComputeRootDescriptorTable(3, uavHandle);
 
     m_CommandList->SetComputeRootShaderResourceView(4, m_IndicesBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetComputeRootShaderResourceView(5, m_VerticesBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetComputeRootShaderResourceView(6, m_TexcoordsBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetComputeRootShaderResourceView(7, m_NormalsBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetComputeRootShaderResourceView(8, m_InstanceBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetComputeRootShaderResourceView(9, m_MaterialBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetComputeRootShaderResourceView(5, m_TexcoordsBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetComputeRootShaderResourceView(6, m_NormalsBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetComputeRootShaderResourceView(7, m_InstanceBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetComputeRootShaderResourceView(8, m_MaterialBuffer->GetGPUVirtualAddress());
 
     D3D12_DISPATCH_RAYS_DESC dispatchDesc{};
     dispatchDesc.RayGenerationShaderRecord = m_RayGenerationShaderRecord;

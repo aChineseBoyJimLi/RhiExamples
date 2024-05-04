@@ -30,14 +30,17 @@ public:
     using AppBaseDx::AppBaseDx;
     static constexpr uint32_t           s_MaxRayRecursionDepth = 3;
     static constexpr DXGI_FORMAT        s_DepthStencilBufferFormat = DXGI_FORMAT_D32_FLOAT;
-    static constexpr uint32_t           s_InstanceCount = 3;
+    static constexpr uint32_t           s_TriangleMeshInstanceCount = 2;
+    static constexpr uint32_t           s_AABBMeshInstanceCount = 1;
+    static constexpr uint32_t           s_InstanceCount = s_TriangleMeshInstanceCount + s_AABBMeshInstanceCount;
     static constexpr uint32_t           s_MaterialCount = 2;
 
+protected:
     bool Init() override;
     void Tick() override;
     void Shutdown() override;
 
-private:
+
     bool CreateDevice();
     bool CreateRootSignature();
     bool CreateShader();
@@ -49,10 +52,7 @@ private:
     bool CreateTopLevelAccelStructure();
     void UpdateConstants();
     
-
-private:
     Microsoft::WRL::ComPtr<ID3D12RootSignature>         m_GlobalRootSignature;
-
     std::shared_ptr<AssetsManager::Blob>                m_RayGenShaderBlob;
     std::shared_ptr<AssetsManager::Blob>                m_MissShadersBlob;
     std::shared_ptr<AssetsManager::Blob>                m_HitGroupShadersBlob;
@@ -66,12 +66,15 @@ private:
 
     Light                                               m_MainLight;
     CameraPerspective                                   m_Camera;
-    Transform                                           m_MeshTransform;
     std::shared_ptr<AssetsManager::Mesh>                m_Mesh;
     std::shared_ptr<AssetsManager::Texture>             m_Texture;
+    std::vector<glm::vec2>                              m_TexCoord0Data;
+    std::vector<glm::vec4>                              m_NormalData;
+    
     std::array<Transform, s_InstanceCount>              m_InstancesTransform;
     std::array<InstanceData, s_InstanceCount>           m_InstancesData;
     std::array<MaterialData, s_MaterialCount>           m_MaterialsData;
+    std::array<D3D12_RAYTRACING_AABB, s_AABBMeshInstanceCount> m_AABB;
     
 
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_CameraDataBuffer;
@@ -81,11 +84,12 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_IndicesBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_TexcoordsBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_NormalsBuffer;
-
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_AABBBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_InstanceBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_MaterialBuffer;
     
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_BLASBuffer;
+    Microsoft::WRL::ComPtr<ID3D12Resource>              m_ProceduralGeoBLASBuffer;
     Microsoft::WRL::ComPtr<ID3D12Resource>              m_TLASBuffer;
     const uint32_t                                      m_OutputUavSlot{0}; // The slot of output texture uav in the descriptor heap
     

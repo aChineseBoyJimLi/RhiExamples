@@ -38,10 +38,10 @@ VkDescriptorBufferInfo CreateDescriptorBufferInfo(VkBuffer inBuffer, size_t inSi
     return bufferInfo;
 }
 
-VkDescriptorImageInfo CreateDescriptorImageInfo(VkImageView inImageView, VkSampler inSampler)
+VkDescriptorImageInfo CreateDescriptorImageInfo(VkImageView inImageView, VkSampler inSampler, VkImageLayout inLayout)
 {
     VkDescriptorImageInfo imageInfo{};
-    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageLayout = inLayout;
     imageInfo.imageView = inImageView;
     imageInfo.sampler = inSampler;
     return imageInfo;

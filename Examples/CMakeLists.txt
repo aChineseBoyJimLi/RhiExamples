@@ -2,7 +2,7 @@ add_subdirectory(ConsoleTest)
 # add_subdirectory(GraphicsPipelineDx)
 # add_subdirectory(IndirectDrawDx)
 # add_subdirectory(OcclusionQueryDx)
-add_subdirectory(MeshPipelineDx)
+# add_subdirectory(MeshPipelineDx)
 add_subdirectory(RayTracingPipelineDx)
 # add_subdirectory(VariableRateShadingDx)
 

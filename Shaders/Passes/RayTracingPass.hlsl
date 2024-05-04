@@ -29,7 +29,7 @@ struct TrianglePrimitiveAttributes
 
 struct ProceduralPrimitiveAttributes
 {
-    float3 Normal;
+    float3 WorldNormal;
 };
 
 struct InstanceData
@@ -57,13 +57,12 @@ RWTexture2D<float4>                         _Output         : register(u0);
 
 // Triangle Mesh Data
 StructuredBuffer<uint>                      _Indices        : register(t1);
-StructuredBuffer<float3>                    _Vertices       : register(t2);
-StructuredBuffer<float2>                    _Texcoords      : register(t3);
-StructuredBuffer<float3>                    _Normals        : register(t4);
+StructuredBuffer<float2>                    _Texcoords      : register(t2);
+StructuredBuffer<float4>                    _Normals        : register(t3);
 
 // Triangle Mesh Instance data
-StructuredBuffer<InstanceData>              _InstanceData : register(t5);
-StructuredBuffer<MaterialData>              _MaterialData : register(t6);
+StructuredBuffer<InstanceData>              _InstanceData : register(t4);
+StructuredBuffer<MaterialData>              _MaterialData : register(t5);
 
 uint3 GetTriangleIndices(uint triangleIndex)
 {
@@ -72,9 +71,9 @@ uint3 GetTriangleIndices(uint triangleIndex)
 
 float3 GetNormal(uint3 indices, float3 barycentrics)
 {
-    float3 v0 = _Normals[indices.x];
-    float3 v1 = _Normals[indices.y];
-    float3 v2 = _Normals[indices.z];
+    float3 v0 = _Normals[indices.x].xyz;
+    float3 v1 = _Normals[indices.y].xyz;
+    float3 v2 = _Normals[indices.z].xyz;
     return normalize(GetAttribute(barycentrics, v0, v1, v2));
 }
 

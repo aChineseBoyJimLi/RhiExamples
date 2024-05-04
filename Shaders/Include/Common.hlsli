@@ -35,5 +35,6 @@ struct IndexedIndirectDrawCommand
 
 #define PI            3.14159265359f
 #define INV_PI        0.31830988618f
+#define EPSILON       1e-6f
 
 #endif
