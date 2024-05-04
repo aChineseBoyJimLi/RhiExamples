@@ -7,7 +7,7 @@ bool RayTracingPipelineDx::CreateRootSignature()
     Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
     Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
     
-    std::array<CD3DX12_ROOT_PARAMETER, 9> globalRootParameters;
+    std::array<CD3DX12_ROOT_PARAMETER, 10> globalRootParameters;
     globalRootParameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL); // _CameraData
     globalRootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL); // _LightData
     globalRootParameters[2].InitAsShaderResourceView(0, 0, D3D12_SHADER_VISIBILITY_ALL); // _AccelStructure
@@ -17,10 +17,11 @@ bool RayTracingPipelineDx::CreateRootSignature()
     globalRootParameters[5].InitAsShaderResourceView(2, 0, D3D12_SHADER_VISIBILITY_ALL); // _Vertices
     globalRootParameters[6].InitAsShaderResourceView(3, 0, D3D12_SHADER_VISIBILITY_ALL); // _Texcoords
     globalRootParameters[7].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_ALL); // _Normals
-    globalRootParameters[8].InitAsShaderResourceView(5, 0, D3D12_SHADER_VISIBILITY_ALL); // _MeshInstanceTransforms
+    globalRootParameters[8].InitAsShaderResourceView(5, 0, D3D12_SHADER_VISIBILITY_ALL); // _InstanceData
+    globalRootParameters[9].InitAsShaderResourceView(6, 0, D3D12_SHADER_VISIBILITY_ALL); // _MaterialData
 
     CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc;
-    globalRootSignatureDesc.Init(globalRootParameters.size()
+    globalRootSignatureDesc.Init((uint32_t)globalRootParameters.size()
         , globalRootParameters.data()
         , 0
         , nullptr
@@ -92,16 +93,25 @@ bool RayTracingPipelineDx::CreatePipelineState()
     D3D12_SHADER_BYTECODE missByteCode = CD3DX12_SHADER_BYTECODE(m_MissShadersBlob->GetData(), m_MissShadersBlob->GetSize());
     misShaderLib->SetDXILLibrary(&missByteCode);
     misShaderLib->DefineExport(L"RayMiss");
+    misShaderLib->DefineExport(L"ShadowMiss");
 
     auto hitShaderLib = raytracingPipeline.CreateSubobject<CD3DX12_DXIL_LIBRARY_SUBOBJECT>();
     D3D12_SHADER_BYTECODE hitByteCode = CD3DX12_SHADER_BYTECODE(m_HitGroupShadersBlob->GetData(), m_HitGroupShadersBlob->GetSize());
     hitShaderLib->SetDXILLibrary(&hitByteCode);
     hitShaderLib->DefineExport(L"ClosestHitTriangle");
+    hitShaderLib->DefineExport(L"ClosestHitProceduralPrim");
+    hitShaderLib->DefineExport(L"ProceduralPlanePrim");
 
     auto hitGroup = raytracingPipeline.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
     hitGroup->SetClosestHitShaderImport(L"ClosestHitTriangle");
     hitGroup->SetHitGroupExport(L"HitGroup");
     hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
+
+    auto hitGroup2 = raytracingPipeline.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
+    hitGroup2->SetIntersectionShaderImport(L"ProceduralPlanePrim");
+    hitGroup2->SetClosestHitShaderImport(L"ClosestHitProceduralPrim");
+    hitGroup2->SetHitGroupExport(L"HitGroup2");
+    hitGroup2->SetHitGroupType(D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE);
 
     auto shaderConfig = raytracingPipeline.CreateSubobject<CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT>();
     constexpr uint32_t payloadSize =  4 * sizeof(float) + sizeof(uint32_t);
@@ -112,7 +122,7 @@ bool RayTracingPipelineDx::CreatePipelineState()
     globalRootSignatureSubobject->SetRootSignature(m_GlobalRootSignature.Get());
 
     auto pipelineConfig = raytracingPipeline.CreateSubobject<CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
-    constexpr uint32_t maxRecursionDepth = 1;
+    constexpr uint32_t maxRecursionDepth = s_MaxRayRecursionDepth;
     pipelineConfig->Config(maxRecursionDepth);
 
     HRESULT hr = m_DeviceHandle->CreateStateObject(raytracingPipeline, IID_PPV_ARGS(&m_PipelineState));
@@ -133,3 +143,69 @@ bool RayTracingPipelineDx::CreatePipelineState()
     return true;
 }
 
+#define align_to(_alignment, _val) (((_val + _alignment - 1) / _alignment) * _alignment)
+
+bool RayTracingPipelineDx::CreateShaderTable()
+{
+    constexpr uint32_t ragGenShaderCount = 1, missShaderCount = 2, hitGroupCount = 2;
+    constexpr uint32_t shaderIdentifierCount = ragGenShaderCount + missShaderCount + hitGroupCount;
+    
+    constexpr size_t shaderTableStride = align_to(64, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+    constexpr size_t shaderTableSize = shaderTableStride * shaderIdentifierCount;
+    m_ShaderTableBuffer = CreateBuffer(shaderTableSize, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_FLAG_NONE);
+
+    void* pData = nullptr;
+    m_ShaderTableBuffer->Map(0, nullptr, &pData);
+    
+    // raygen shader
+    uint32_t index = 0;
+    memcpy(static_cast<uint8_t*>(pData) + index * shaderTableStride
+        , m_PipelineStateProperties->GetShaderIdentifier(L"RayGen")
+        , shaderTableStride);
+    index++;
+    
+    m_RayGenerationShaderRecord.StartAddress = m_ShaderTableBuffer->GetGPUVirtualAddress();
+    m_RayGenerationShaderRecord.SizeInBytes = shaderTableStride;
+    
+
+    uint32_t missStartIndex = index;
+    // RayMiss shader
+    memcpy(static_cast<uint8_t*>(pData) + missStartIndex * shaderTableStride
+        , m_PipelineStateProperties->GetShaderIdentifier(L"RayMiss")
+        , shaderTableStride);
+    
+    index++;
+    
+    // ShadowMiss shader
+    memcpy(static_cast<uint8_t*>(pData) + index * shaderTableStride
+        , m_PipelineStateProperties->GetShaderIdentifier(L"ShadowMiss")
+        , shaderTableStride);
+
+    index++;
+
+    m_MissShaderRecord.StartAddress = m_ShaderTableBuffer->GetGPUVirtualAddress() + shaderTableStride;
+    m_MissShaderRecord.StrideInBytes = shaderTableStride;
+    m_MissShaderRecord.SizeInBytes = missShaderCount * shaderTableStride;
+    
+
+    uint32_t hitGroupStartIndex = index;
+    // HitGroup (Triangle Mesh)
+    memcpy(static_cast<uint8_t*>(pData) + index * shaderTableStride
+        , m_PipelineStateProperties->GetShaderIdentifier(L"HitGroup")
+        , shaderTableStride);
+    
+    index++;
+
+    // HitGroup2 (Procedural Plane)
+    memcpy(static_cast<uint8_t*>(pData) + index * shaderTableStride
+        , m_PipelineStateProperties->GetShaderIdentifier(L"HitGroup2")
+        , shaderTableStride);
+
+    m_HitGroupRecord.StartAddress = m_ShaderTableBuffer->GetGPUVirtualAddress() + hitGroupStartIndex * shaderTableStride;
+    m_HitGroupRecord.StrideInBytes = shaderTableStride;
+    m_HitGroupRecord.SizeInBytes = hitGroupCount * shaderTableStride;
+    
+    m_ShaderTableBuffer->Unmap(0, nullptr);
+    
+    return true;
+}

@@ -1,4 +1,4 @@
-set(project GpuQueryDx)
+set(project OcclusionQueryDx)
 set(folder "Examples")
 
 file(GLOB sources "*.cpp" "*.h")

@@ -1,4 +1,4 @@
-#include "GpuQueryDx.h"
+#include "OcclusionQueryDx.h"
 #include "Log.h"
 #include <iostream>
 
@@ -6,7 +6,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     try
     {
-        GpuQueryDx app(1280, 720, hInstance, TEXT("D3D12 GPU Query"));
+        OcclusionQueryDx app(1280, 720, hInstance, TEXT("D3D12 Occlusion Query"));
         app.Run();
         return 0;
     }

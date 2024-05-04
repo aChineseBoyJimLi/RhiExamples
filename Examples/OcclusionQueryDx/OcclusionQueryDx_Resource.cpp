@@ -1,4 +1,4 @@
-#include "GpuQueryDx.h"
+#include "OcclusionQueryDx.h"
 #include <random>
 
 Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferHelper(ID3D12Device* inDevice
@@ -147,7 +147,7 @@ static Microsoft::WRL::ComPtr<ID3D12Resource> UploadTexture(ID3D12Device* inDevi
     return stagingBuffer;
 }
 
-bool GpuQueryDx::CreateDepthStencilBuffer()
+bool OcclusionQueryDx::CreateDepthStencilBuffer()
 {
     D3D12_CLEAR_VALUE optClear;
     optClear.Format = s_DepthStencilBufferFormat;
@@ -205,7 +205,7 @@ struct VertexData
     glm::vec2 TexCoord;
 };
 
-bool GpuQueryDx::CreateResources()
+bool OcclusionQueryDx::CreateResources()
 {
     m_Camera.AspectRatio = static_cast<float>(m_Width) / static_cast<float>(m_Height);
     m_Camera.Transform.SetWorldPosition(glm::vec3(0, 20, 20));
@@ -400,7 +400,7 @@ bool GpuQueryDx::CreateResources()
     return true;
 }
 
-bool GpuQueryDx::CreateQueryResultResources()
+bool OcclusionQueryDx::CreateQueryResultResources()
 {
     m_OcclusionQueryResult = CreateBufferHelper(m_DeviceHandle.Get()
         , 8

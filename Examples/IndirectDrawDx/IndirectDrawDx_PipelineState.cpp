@@ -110,7 +110,7 @@ bool IndirectDrawDx::CreateShader()
         return false;
     }
 
-    m_ComputeShaderBlob = AssetsManager::LoadShaderImmediately("VisibleCulling.cs.bin");
+    m_ComputeShaderBlob = AssetsManager::LoadShaderImmediately("VisibleCullingDx.cs.bin");
     if(!m_ComputeShaderBlob || m_ComputeShaderBlob->IsEmpty())
     {
         Log::Error("Failed to load compute shader");

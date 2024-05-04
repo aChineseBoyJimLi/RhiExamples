@@ -1,21 +1,19 @@
 #include "MeshPipelineDx.h"
 
-static float s_YawDegree = 0;
-static float s_AngularVelocity = 0.5f;
-
 void MeshPipelineDx::UpdateConstants()
 {
-    s_YawDegree = glm::clamp((s_YawDegree + GetDeltaTime()) * s_AngularVelocity, 0.0f, 360.0f) ;
-    
-    TransformData transformData;
-    m_MeshTransform.GetTransformData(transformData);
-    m_MeshTransform.Yaw(s_YawDegree);
-
     CameraData cameraData;
     m_Camera.GetCameraData(cameraData);
-    
-    WriteBufferData(m_TransformDataBuffer.Get(), &transformData, TransformData::GetAlignedByteSizes());
     WriteBufferData(m_CameraDataBuffer.Get(), &cameraData, CameraData::GetAlignedByteSizes());
+
+    ViewFrustum viewFrustum;
+    m_Camera.GetViewFrustumWorldSpace(viewFrustum);
+    ViewFrustumCB viewFrustumCB;
+    for(uint32_t i = 0; i < 8; ++i)
+    {
+        viewFrustumCB.Corners[i] = glm::vec4(viewFrustum.Corners[i], 1.0f);
+    }
+    WriteBufferData(m_ViewFrustumBuffer.Get(), &viewFrustumCB, ViewFrustumCB::GetAlignedByteSizes());
 }
 
 void MeshPipelineDx::Tick()
@@ -40,7 +38,7 @@ void MeshPipelineDx::Tick()
     screenViewport.MaxDepth = 1.0f;
     m_CommandList->RSSetViewports(1, &screenViewport);
 
-    D3D12_RECT scissorRect = { 0, 0, m_Width, m_Height };
+    D3D12_RECT scissorRect = { 0, 0, (long)m_Width, (long)m_Height };
     m_CommandList->RSSetScissorRects(1, &scissorRect);
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle[] = {m_RtvHandles[m_CurrentIndex]};
@@ -55,21 +53,16 @@ void MeshPipelineDx::Tick()
     m_CommandList->SetDescriptorHeaps(2, descriptorHeaps);
     m_CommandList->SetPipelineState(m_PipelineState.Get());
     m_CommandList->SetGraphicsRootSignature(m_RootSignature.Get());
-    m_CommandList->SetGraphicsRootConstantBufferView(0, m_TransformDataBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetGraphicsRootConstantBufferView(1, m_CameraDataBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetGraphicsRootShaderResourceView(2, m_VerticesBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetGraphicsRootShaderResourceView(3, m_TexCoordsBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetGraphicsRootShaderResourceView(4, m_MeshletDataBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetGraphicsRootShaderResourceView(5, m_PackedPrimitiveIndicesBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetGraphicsRootShaderResourceView(6, m_UniqueVertexIndicesBuffer->GetGPUVirtualAddress());
-    
-    D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandle = m_ShaderBoundViewHeap->GetGPUDescriptorHandleForHeapStart();
-    textureSrvHandle.ptr += m_MainTextureSrvSlot * m_DeviceHandle->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    m_CommandList->SetGraphicsRootDescriptorTable(7, textureSrvHandle);
-    
-    D3D12_GPU_DESCRIPTOR_HANDLE samplerHandle = m_SamplerHeap->GetGPUDescriptorHandleForHeapStart();
-    samplerHandle.ptr += m_SamplerSlot * m_DeviceHandle->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    m_CommandList->SetGraphicsRootDescriptorTable(8, samplerHandle);
+    m_CommandList->SetGraphicsRootConstantBufferView(0, m_CameraDataBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetGraphicsRootConstantBufferView(1, m_ViewFrustumBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetGraphicsRootConstantBufferView(2, m_MeshInfoBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetGraphicsRootShaderResourceView(3, m_VerticesBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetGraphicsRootShaderResourceView(4, m_TexCoordsBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetGraphicsRootShaderResourceView(5, m_MeshletDataBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetGraphicsRootShaderResourceView(6, m_PackedPrimitiveIndicesBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetGraphicsRootShaderResourceView(7, m_UniqueVertexIndicesBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetGraphicsRootShaderResourceView(8, m_MeshletCullDataBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetGraphicsRootShaderResourceView(9, m_InstanceBuffer->GetGPUVirtualAddress());
     
     m_CommandList->DispatchMesh(m_GroupCount, 1, 1);
 

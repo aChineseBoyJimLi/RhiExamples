@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <fstream>
 #include <filesystem>
 #include <assimp/Importer.hpp>
@@ -35,9 +34,7 @@ namespace AssetsManager
         uint8_t* m_Data;
         size_t m_Size;
     };
-
     
-
     class Mesh
     {
     public:

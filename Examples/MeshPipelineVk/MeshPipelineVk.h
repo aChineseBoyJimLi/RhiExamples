@@ -3,7 +3,6 @@
 #include "../AppBaseVk.h"
 #include "Transform.h"
 #include "Camera.h"
-#include "Light.h"
 #include "AssetsManager.h"
 #include <array>
 

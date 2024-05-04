@@ -11,18 +11,6 @@ void RayTracingPipelineDx::UpdateConstants()
     lightData.LightDirection = m_MainLight.Transform.GetWorldForward();
     lightData.LightIntensity = m_MainLight.Intensity;
     WriteBufferData(m_LightDataBuffer.Get(), &lightData, DirectionalLightData::GetAlignedByteSizes());
-    
-    void* pData = nullptr;
-    m_InstanceTransformBuffer->Map(0, nullptr, &pData);
-    for(uint32_t i = 0; i < s_MeshInstanceCount; ++i)
-    {
-        TransformData transformData;
-        m_MeshInstances[i].Transform.GetTransformData(transformData);
-        memcpy(static_cast<uint8_t*>(pData) + i * sizeof(TransformData)
-        , &transformData
-        , sizeof(TransformData));
-    }
-    m_InstanceTransformBuffer->Unmap(0, nullptr);
 }
 
 void RayTracingPipelineDx::Tick()
@@ -54,7 +42,8 @@ void RayTracingPipelineDx::Tick()
     m_CommandList->SetComputeRootShaderResourceView(5, m_VerticesBuffer->GetGPUVirtualAddress());
     m_CommandList->SetComputeRootShaderResourceView(6, m_TexcoordsBuffer->GetGPUVirtualAddress());
     m_CommandList->SetComputeRootShaderResourceView(7, m_NormalsBuffer->GetGPUVirtualAddress());
-    m_CommandList->SetComputeRootShaderResourceView(8, m_InstanceTransformBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetComputeRootShaderResourceView(8, m_InstanceBuffer->GetGPUVirtualAddress());
+    m_CommandList->SetComputeRootShaderResourceView(9, m_MaterialBuffer->GetGPUVirtualAddress());
 
     D3D12_DISPATCH_RAYS_DESC dispatchDesc{};
     dispatchDesc.RayGenerationShaderRecord = m_RayGenerationShaderRecord;

@@ -5,18 +5,18 @@ bool MeshPipelineDx::CreateRootSignature()
 {
     Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
     Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
-    std::array<CD3DX12_ROOT_PARAMETER, 9> rootParameters;
-    rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_MESH);
-    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_MESH);
-    rootParameters[2].InitAsShaderResourceView(0, 0, D3D12_SHADER_VISIBILITY_MESH);
-    rootParameters[3].InitAsShaderResourceView(1, 0, D3D12_SHADER_VISIBILITY_MESH);
-    rootParameters[4].InitAsShaderResourceView(2, 0, D3D12_SHADER_VISIBILITY_MESH);
-    rootParameters[5].InitAsShaderResourceView(3, 0, D3D12_SHADER_VISIBILITY_MESH);
-    rootParameters[6].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_MESH);
-    CD3DX12_DESCRIPTOR_RANGE descriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5, 0);
-    rootParameters[7].InitAsDescriptorTable(1, &descriptorRange1, D3D12_SHADER_VISIBILITY_PIXEL);
-    CD3DX12_DESCRIPTOR_RANGE descriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0, 0);
-    rootParameters[8].InitAsDescriptorTable(1, &descriptorRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    std::array<CD3DX12_ROOT_PARAMETER, 10> rootParameters;
+    rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL); // _CameraData
+    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL); // _ViewFrustum
+    rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL); // _MeshInfo
+    rootParameters[3].InitAsShaderResourceView(0, 0, D3D12_SHADER_VISIBILITY_ALL); // _Vertices
+    rootParameters[4].InitAsShaderResourceView(1, 0, D3D12_SHADER_VISIBILITY_ALL); // _TexCoords
+    rootParameters[5].InitAsShaderResourceView(2, 0, D3D12_SHADER_VISIBILITY_ALL); // _Meshlets
+    rootParameters[6].InitAsShaderResourceView(3, 0, D3D12_SHADER_VISIBILITY_ALL); // _PackedPrimitiveIndices
+    rootParameters[7].InitAsShaderResourceView(4, 0, D3D12_SHADER_VISIBILITY_ALL); // _UniqueVertexIndices
+    rootParameters[8].InitAsShaderResourceView(5, 0, D3D12_SHADER_VISIBILITY_ALL); // _MeshletCullData
+    rootParameters[9].InitAsShaderResourceView(6, 0, D3D12_SHADER_VISIBILITY_ALL); // _InstanceData
+    
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Init(static_cast<uint32_t>(rootParameters.size()), rootParameters.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
@@ -46,6 +46,12 @@ bool MeshPipelineDx::CreateRootSignature()
 
 bool MeshPipelineDx::CreateShader()
 {
+    m_AmplificationShaderBlob = AssetsManager::LoadShaderImmediately("VisibleCulling.as.bin");
+    if(!m_AmplificationShaderBlob || m_AmplificationShaderBlob->IsEmpty())
+    {
+        Log::Error("Failed to load task shader");
+        return false;
+    }
     m_MeshShaderBlob = AssetsManager::LoadShaderImmediately("MeshletViewer.ms.bin");
     if(!m_MeshShaderBlob || m_MeshShaderBlob->IsEmpty())
     {
@@ -65,6 +71,7 @@ bool MeshPipelineDx::CreatePipelineState()
 {
     D3DX12_MESH_SHADER_PIPELINE_STATE_DESC pipelineDesc = {};
     pipelineDesc.pRootSignature        = m_RootSignature.Get();
+    pipelineDesc.AS                    = CD3DX12_SHADER_BYTECODE( m_AmplificationShaderBlob->GetData(), m_AmplificationShaderBlob->GetSize() );
     pipelineDesc.MS                    = CD3DX12_SHADER_BYTECODE( m_MeshShaderBlob->GetData(), m_MeshShaderBlob->GetSize() );
     pipelineDesc.PS                    = CD3DX12_SHADER_BYTECODE( m_PixelShaderBlob->GetData(), m_PixelShaderBlob->GetSize() );
     pipelineDesc.NumRenderTargets      = 1;

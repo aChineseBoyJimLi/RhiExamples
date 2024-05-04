@@ -93,7 +93,7 @@ bool IndirectDrawVk::CreateShader()
         Log::Error("Failed to load pixel shader");
         return false;
     }
-	m_ComputeShaderBlob = AssetsManager::LoadShaderImmediately("VisibleCulling2.cs.spv");
+	m_ComputeShaderBlob = AssetsManager::LoadShaderImmediately("VisibleCullingVk.cs.spv");
 	if(!m_ComputeShaderBlob || m_ComputeShaderBlob->IsEmpty())
 	{
 		Log::Error("Failed to load compute shader");

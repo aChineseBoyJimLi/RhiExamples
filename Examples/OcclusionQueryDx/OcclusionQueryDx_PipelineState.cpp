@@ -1,6 +1,6 @@
-#include "GpuQueryDx.h"
+#include "OcclusionQueryDx.h"
 
-bool GpuQueryDx::CreateRootSignature()
+bool OcclusionQueryDx::CreateRootSignature()
 {
     Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
     Microsoft::WRL::ComPtr<ID3DBlob> signatureBlob;
@@ -41,7 +41,7 @@ bool GpuQueryDx::CreateRootSignature()
     return true;
 }
 
-bool GpuQueryDx::CreateShader()
+bool OcclusionQueryDx::CreateShader()
 {
     m_VertexShaderBlob = AssetsManager::LoadShaderImmediately("Graphics.vs.bin");
     if(!m_VertexShaderBlob || m_VertexShaderBlob->IsEmpty())
@@ -59,7 +59,7 @@ bool GpuQueryDx::CreateShader()
     return true;
 }
 
-bool GpuQueryDx::CreatePipelineState()
+bool OcclusionQueryDx::CreatePipelineState()
 {
     std::array<D3D12_INPUT_ELEMENT_DESC, 3> inputElements;
     inputElements[0] = { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
@@ -93,7 +93,7 @@ bool GpuQueryDx::CreatePipelineState()
     return true;
 }
 
-bool GpuQueryDx::CreateQueryHeaps()
+bool OcclusionQueryDx::CreateQueryHeaps()
 {
     D3D12_QUERY_HEAP_DESC queryHeapDesc{};
     queryHeapDesc.NodeMask = GetNodeMask();

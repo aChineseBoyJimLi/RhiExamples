@@ -1,6 +1,6 @@
-#include "GpuQueryDx.h"
+#include "OcclusionQueryDx.h"
 
-void GpuQueryDx::UpdateConstants()
+void OcclusionQueryDx::UpdateConstants()
 {
     CameraData cameraData;
     m_Camera.GetCameraData(cameraData);
@@ -13,7 +13,7 @@ void GpuQueryDx::UpdateConstants()
     WriteBufferData(m_LightDataBuffer.Get(), &lightData, DirectionalLightData::GetAlignedByteSizes());
 }
 
-void GpuQueryDx::Tick()
+void OcclusionQueryDx::Tick()
 {
     if(!m_IsRunning)
     {

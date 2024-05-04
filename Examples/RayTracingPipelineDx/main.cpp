@@ -4,7 +4,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
     try
     {
-        RayTracingPipelineDx app(320, 200, hInstance, TEXT("D3D12 Ray Tracing Pipeline"));
+        RayTracingPipelineDx app(1280, 720, hInstance, TEXT("D3D12 Ray Tracing Pipeline"));
         app.Run();
         return 0;
     }
