@@ -69,7 +69,8 @@ private:
     void UpdateConstants();
 
 
-    VkDescriptorSetLayout       m_DescriptorLayout;
+    VkDescriptorSetLayout       m_DescriptorLayoutSpace0;
+    VkDescriptorSetLayout       m_DescriptorLayoutSpace1;
     std::shared_ptr<AssetsManager::Blob> m_VertexShaderBlob;
     std::shared_ptr<AssetsManager::Blob> m_PixelShaderBlob;
     VkShaderModule              m_VertexShaderModule;
@@ -109,6 +110,6 @@ private:
     std::array<VkDeviceMemory, s_TexturesCount>     m_MainTextureMemories;
     std::array<VkSampler, s_TexturesCount>     m_MainTextureSamplers;
     
-    VkDescriptorSet             m_DescriptorSet;
-    
+    VkDescriptorSet             m_DescriptorSetSpace0;
+    VkDescriptorSet             m_DescriptorSetSpace1;
 };

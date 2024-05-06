@@ -262,57 +262,78 @@ bool GraphicsPipelineVk::CreateResources()
 
     ExecuteCommandBuffer();
 
-    // Allocate descriptor set
+    // Allocate descriptor set 0
     VkDescriptorSetAllocateInfo descriptorSetAllocInfo {};
     descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     descriptorSetAllocInfo.descriptorPool = m_DescriptorPoolHandle;
-    descriptorSetAllocInfo.pSetLayouts = &m_DescriptorLayout;
+    descriptorSetAllocInfo.pSetLayouts = &m_DescriptorLayoutSpace0;
     descriptorSetAllocInfo.descriptorSetCount = 1;
-    if(vkAllocateDescriptorSets(m_DeviceHandle, &descriptorSetAllocInfo, &m_DescriptorSet) != VK_SUCCESS)
+    if(vkAllocateDescriptorSets(m_DeviceHandle, &descriptorSetAllocInfo, &m_DescriptorSetSpace0) != VK_SUCCESS)
     {
-        Log::Error("Failed to allocate descriptor set");
+        Log::Error("Failed to allocate descriptor set 0");
         return false;
     }
 
+    
+
     std::array<VkWriteDescriptorSet, 6> descriptorWrites{};
     VkDescriptorBufferInfo cameraBufferInfo = CreateDescriptorBufferInfo(m_CameraDataBuffer, CameraData::GetAlignedByteSizes());
-    UpdateBufferDescriptor(descriptorWrites[0], m_DescriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &cameraBufferInfo, GetBindingSlot(ERegisterType::ConstantBuffer, 0)); // _CameraData 
+    UpdateBufferDescriptor(descriptorWrites[0], m_DescriptorSetSpace0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &cameraBufferInfo, GetBindingSlot(ERegisterType::ConstantBuffer, 0)); // _CameraData 
     
     VkDescriptorBufferInfo lightBufferInfo = CreateDescriptorBufferInfo(m_LightDataBuffer, DirectionalLightData::GetAlignedByteSizes());
-    UpdateBufferDescriptor(descriptorWrites[1], m_DescriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &lightBufferInfo, GetBindingSlot(ERegisterType::ConstantBuffer, 1)); // _LightData
+    UpdateBufferDescriptor(descriptorWrites[1], m_DescriptorSetSpace0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &lightBufferInfo, GetBindingSlot(ERegisterType::ConstantBuffer, 1)); // _LightData
     
     VkDescriptorBufferInfo instanceBufferInfo = CreateDescriptorBufferInfo(m_InstanceBuffer, instanceBufferBytesSize);
-    UpdateBufferDescriptor(descriptorWrites[2], m_DescriptorSet, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &instanceBufferInfo, GetBindingSlot(ERegisterType::ShaderResource, 0)); // _InstancesBuffer
+    UpdateBufferDescriptor(descriptorWrites[2], m_DescriptorSetSpace0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, &instanceBufferInfo, GetBindingSlot(ERegisterType::ShaderResource, 0)); // _InstancesBuffer
 
-    std::array<VkDescriptorImageInfo, s_TexturesCount> imageDescriptorInfos;
-    std::array<VkDescriptorImageInfo, s_TexturesCount> samplerDescriptorInfos;
+    VkDescriptorBufferInfo materialsBufferInfo = CreateDescriptorBufferInfo(m_MaterialsBuffer, materialsBufferBytesSize);
+    UpdateBufferDescriptor(descriptorWrites[4]
+        , m_DescriptorSetSpace0
+        , VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
+        , &materialsBufferInfo
+        , GetBindingSlot(ERegisterType::ShaderResource, 1)); // _MaterialsBuffer
+
+    VkDescriptorImageInfo samplerDescriptorInfo = CreateDescriptorImageInfo(VK_NULL_HANDLE, m_MainTextureSamplers[0]);
+    UpdateImageDescriptor(descriptorWrites[5]
+        , m_DescriptorSetSpace0
+        , VK_DESCRIPTOR_TYPE_SAMPLER
+        , &samplerDescriptorInfo
+        , 1
+        , GetBindingSlot(ERegisterType::Sampler, 0)); // _MainTexSampler
     
+    // Allocate descriptor set 1
+    uint32_t descriptorCounts[2] = {s_TexturesCount, 1};
+    VkDescriptorSetVariableDescriptorCountAllocateInfoEXT variableDescriptorCountAllocInfo = {};
+    variableDescriptorCountAllocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+    variableDescriptorCountAllocInfo.descriptorSetCount = 1;
+    variableDescriptorCountAllocInfo.pDescriptorCounts  = descriptorCounts;
+
+    VkDescriptorSetAllocateInfo descriptorSetAllocInfo1 {};
+    descriptorSetAllocInfo1.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptorSetAllocInfo1.descriptorPool = m_DescriptorPoolHandle;
+    descriptorSetAllocInfo1.pSetLayouts = &m_DescriptorLayoutSpace1;
+    descriptorSetAllocInfo1.descriptorSetCount = 1;
+    descriptorSetAllocInfo1.pNext = &variableDescriptorCountAllocInfo;
+    if(vkAllocateDescriptorSets(m_DeviceHandle, &descriptorSetAllocInfo1, &m_DescriptorSetSpace1) != VK_SUCCESS)
+    {
+        Log::Error("Failed to allocate descriptor set 1");
+        return false;
+    }
+    
+    std::array<VkDescriptorImageInfo, s_TexturesCount> imageDescriptorInfos;
     for(uint32_t i = 0; i < s_TexturesCount; ++i)
     {
         imageDescriptorInfos[i] = CreateDescriptorImageInfo(m_MainTextureViews[i], VK_NULL_HANDLE);
-        samplerDescriptorInfos[i] = CreateDescriptorImageInfo(VK_NULL_HANDLE, m_MainTextureSamplers[i]);
     }
 
     UpdateImageDescriptor(descriptorWrites[3]
-        , m_DescriptorSet
+        , m_DescriptorSetSpace1
         , VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
         , imageDescriptorInfos.data()
         , (uint32_t)imageDescriptorInfos.size()
-        , GetBindingSlot(ERegisterType::ShaderResource, 1)); // _MainTex
+        , GetBindingSlot(ERegisterType::ShaderResource, 0)); // _MainTex[]
     
-    VkDescriptorBufferInfo materialsBufferInfo = CreateDescriptorBufferInfo(m_MaterialsBuffer, materialsBufferBytesSize);
-    UpdateBufferDescriptor(descriptorWrites[4]
-        , m_DescriptorSet
-        , VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
-        , &materialsBufferInfo
-        , GetBindingSlot(ERegisterType::ShaderResource, 6)); // _MaterialsBuffer
-
-    UpdateImageDescriptor(descriptorWrites[5]
-        , m_DescriptorSet
-        , VK_DESCRIPTOR_TYPE_SAMPLER
-        , samplerDescriptorInfos.data()
-        , (uint32_t)samplerDescriptorInfos.size()
-        , GetBindingSlot(ERegisterType::Sampler, 0)); // _MainTexSampler
+   
     
 
     vkUpdateDescriptorSets(m_DeviceHandle, (uint32_t)descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
@@ -322,10 +343,16 @@ bool GraphicsPipelineVk::CreateResources()
 
 void GraphicsPipelineVk::DestroyResources()
 {
-    if(m_DescriptorSet != VK_NULL_HANDLE)
+    if(m_DescriptorSetSpace1 != VK_NULL_HANDLE)
     {
-        vkFreeDescriptorSets(m_DeviceHandle, m_DescriptorPoolHandle, 1, &m_DescriptorSet);
-        m_DescriptorSet = VK_NULL_HANDLE;
+        vkFreeDescriptorSets(m_DeviceHandle, m_DescriptorPoolHandle, 1, &m_DescriptorSetSpace1);
+        m_DescriptorSetSpace1 = VK_NULL_HANDLE;
+    }
+    
+    if(m_DescriptorSetSpace0 != VK_NULL_HANDLE)
+    {
+        vkFreeDescriptorSets(m_DeviceHandle, m_DescriptorPoolHandle, 1, &m_DescriptorSetSpace0);
+        m_DescriptorSetSpace0 = VK_NULL_HANDLE;
     }
     
     for(uint32_t i = 0; i < s_TexturesCount; ++i)

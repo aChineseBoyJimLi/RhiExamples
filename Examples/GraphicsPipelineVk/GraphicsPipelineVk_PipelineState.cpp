@@ -3,35 +3,66 @@
 
 bool GraphicsPipelineVk::CreateDescriptorLayout()
 {
+	// Descriptor Set 0 Layout
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 0), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}); // _CameraData
     bindings.push_back({GetBindingSlot(ERegisterType::ConstantBuffer, 1), VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _LightData
     bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}); // _InstanceData
-    bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 1), VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex
-    bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 6), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MaterialData
-    bindings.push_back({GetBindingSlot(ERegisterType::Sampler, 0), VK_DESCRIPTOR_TYPE_SAMPLER, 5, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex_Sampler
+    bindings.push_back({GetBindingSlot(ERegisterType::ShaderResource, 1), VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MaterialData
+	bindings.push_back({GetBindingSlot(ERegisterType::Sampler, 0), VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex_Sampler
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
 
-    VkResult result = vkCreateDescriptorSetLayout(m_DeviceHandle, &layoutInfo, nullptr, &m_DescriptorLayout);
+    VkResult result = vkCreateDescriptorSetLayout(m_DeviceHandle, &layoutInfo, nullptr, &m_DescriptorLayoutSpace0);
     if(result != VK_SUCCESS)
     {
-        Log::Error("Failed to create descriptor set layout");
+        Log::Error("Failed to create descriptor set 0 layout");
         return false;
     }
+
+	// Descriptor Set 1 Layout
+	std::vector<VkDescriptorSetLayoutBinding> bindings2;
+	bindings2.push_back({GetBindingSlot(ERegisterType::ShaderResource, 0), VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, s_TexturesCount, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}); // _MainTex
+	
+	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsInfo{};
+	bindingFlagsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
+	bindingFlagsInfo.bindingCount = static_cast<uint32_t>(bindings2.size());
+	VkDescriptorBindingFlagsEXT bindingFlagsData[1] = {
+		VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT // for _MainTex
+	};
+	bindingFlagsInfo.pBindingFlags = bindingFlagsData;
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo1{};
+	layoutInfo1.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo1.bindingCount = static_cast<uint32_t>(bindings2.size());
+	layoutInfo1.pBindings = bindings2.data();
+	layoutInfo1.pNext = &bindingFlagsInfo;
+
+	result = vkCreateDescriptorSetLayout(m_DeviceHandle, &layoutInfo1, nullptr, &m_DescriptorLayoutSpace1);
+	if(result != VK_SUCCESS)
+	{
+		Log::Error("Failed to create descriptor set 1 layout");
+		return false;
+	}
     
     return true;
 }
 
 void GraphicsPipelineVk::DestroyDescriptorLayout()
 {
-    if(m_DescriptorLayout != VK_NULL_HANDLE)
+	if(m_DescriptorLayoutSpace1 != VK_NULL_HANDLE)
+	{
+		vkDestroyDescriptorSetLayout(m_DeviceHandle, m_DescriptorLayoutSpace1, nullptr);
+		m_DescriptorLayoutSpace1 = VK_NULL_HANDLE;
+	}
+	
+    if(m_DescriptorLayoutSpace0 != VK_NULL_HANDLE)
     {
-        vkDestroyDescriptorSetLayout(m_DeviceHandle, m_DescriptorLayout, nullptr);
-        m_DescriptorLayout = VK_NULL_HANDLE;
+        vkDestroyDescriptorSetLayout(m_DeviceHandle, m_DescriptorLayoutSpace0, nullptr);
+        m_DescriptorLayoutSpace0 = VK_NULL_HANDLE;
     }
 }
 
@@ -163,10 +194,12 @@ void GraphicsPipelineVk::DestroyRenderPass()
 
 bool GraphicsPipelineVk::CreatePipelineState()
 {
+	VkDescriptorSetLayout layouts[2] = {m_DescriptorLayoutSpace0, m_DescriptorLayoutSpace1};
+	
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &m_DescriptorLayout;
+	pipelineLayoutInfo.setLayoutCount = 2;
+	pipelineLayoutInfo.pSetLayouts = layouts;
 	VkResult result = vkCreatePipelineLayout(m_DeviceHandle, &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
 	if(result != VK_SUCCESS)
 	{

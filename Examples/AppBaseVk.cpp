@@ -446,7 +446,6 @@ std::shared_ptr<StagingBuffer> AppBaseVk::UploadTexture(VkImage dstTexture, cons
 
     vkCmdCopyBufferToImage(m_CmdBufferHandle, stagingBuffer->m_Buffer, dstTexture, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-
     barrier = ImageMemoryBarrier(dstTexture
         , VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         , VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL

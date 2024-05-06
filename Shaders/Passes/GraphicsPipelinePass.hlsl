@@ -41,8 +41,7 @@ struct MaterialData
 ConstantBuffer<CameraData>				_CameraData		: register(b0);
 ConstantBuffer<DirectionalLightData>	_LightData		: register(b1);
 StructuredBuffer<InstanceData>			_InstanceData	: register(t0);
-Texture2D								_MainTex[5]		: register(t1); // occupy registers t1, t2, ... , t5
-StructuredBuffer<MaterialData>			_MaterialData	: register(t6);
-SamplerState							_MainTex_Sampler[5]: register(s0); // occupy registers s0, s1, ... , s4
-
+StructuredBuffer<MaterialData>			_MaterialData	: register(t1);
+SamplerState							_MainTex_Sampler: register(s0);
+Texture2D								_MainTex[]		: register(t0, space1); // occupy registers t0, t1, ... in space1
 #endif

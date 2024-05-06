@@ -3,7 +3,7 @@
 #include <array>
 
 static const std::vector<const char*> s_ValidationLayerNames = {
-    "VK_LAYER_KHRONOS_validation"
+    "VK_LAYER_KHRONOS_validation",
 };
 
 static const std::vector<const char*> s_InstanceExtensions = {

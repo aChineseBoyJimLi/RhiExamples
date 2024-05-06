@@ -321,15 +321,15 @@ bool GraphicsPipelineDx::CreateResources()
 
     BeginCommandList();
 
-    auto stagingBuffer1 = UploadBuffer(m_DeviceHandle.Get(), m_CommandList.Get(), m_VerticesBuffer.Get(), verticesData.data(), vertexBufferSize);
-    auto stagingBuffer2 = UploadBuffer(m_DeviceHandle.Get(), m_CommandList.Get(), m_IndicesBuffer.Get(), m_Mesh->GetIndicesData(), m_Mesh->GetIndicesDataByteSize());
-    auto stagingBuffer3 = UploadBuffer(m_DeviceHandle.Get(), m_CommandList.Get(), m_InstancesBuffer.Get(), instancesData.data(), instanceBufferBytesSize);
-    auto stagingBuffer4 = UploadBuffer(m_DeviceHandle.Get(), m_CommandList.Get(), m_MaterialsBuffer.Get(), materialsData.data(), materialsBufferBytesSize);
-    auto stagingBuffer5 = UploadTexture(m_DeviceHandle.Get(), m_CommandList.Get(), m_MainTextures[0].Get(), m_Textures[0]->GetScratchImage());
-    auto stagingBuffer6 = UploadTexture(m_DeviceHandle.Get(), m_CommandList.Get(), m_MainTextures[1].Get(), m_Textures[1]->GetScratchImage());
-    auto stagingBuffer7 = UploadTexture(m_DeviceHandle.Get(), m_CommandList.Get(), m_MainTextures[2].Get(), m_Textures[2]->GetScratchImage());
-    auto stagingBuffer8 = UploadTexture(m_DeviceHandle.Get(), m_CommandList.Get(), m_MainTextures[3].Get(), m_Textures[3]->GetScratchImage());
-    auto stagingBuffer9 = UploadTexture(m_DeviceHandle.Get(), m_CommandList.Get(), m_MainTextures[4].Get(), m_Textures[4]->GetScratchImage());
+    auto stagingBuffer1 = UploadBuffer(m_VerticesBuffer.Get(), verticesData.data(), vertexBufferSize);
+    auto stagingBuffer2 = UploadBuffer(m_IndicesBuffer.Get(), m_Mesh->GetIndicesData(), m_Mesh->GetIndicesDataByteSize());
+    auto stagingBuffer3 = UploadBuffer(m_InstancesBuffer.Get(), instancesData.data(), instanceBufferBytesSize);
+    auto stagingBuffer4 = UploadBuffer(m_MaterialsBuffer.Get(), materialsData.data(), materialsBufferBytesSize);
+    auto stagingBuffer5 = UploadTexture(m_MainTextures[0].Get(), m_Textures[0]->GetScratchImage());
+    auto stagingBuffer6 = UploadTexture(m_MainTextures[1].Get(), m_Textures[1]->GetScratchImage());
+    auto stagingBuffer7 = UploadTexture(m_MainTextures[2].Get(), m_Textures[2]->GetScratchImage());
+    auto stagingBuffer8 = UploadTexture(m_MainTextures[3].Get(), m_Textures[3]->GetScratchImage());
+    auto stagingBuffer9 = UploadTexture(m_MainTextures[4].Get(), m_Textures[4]->GetScratchImage());
 
 
     std::array<CD3DX12_RESOURCE_BARRIER, 9> barriers;
