@@ -386,7 +386,7 @@ bool IndirectDrawVk::CreatePipelineState()
 	result = vkCreateComputePipelines(m_DeviceHandle, VK_NULL_HANDLE, 1,  &computePipelineInfo, nullptr, &m_CullingPassPipelineState);
 	if(result != VK_SUCCESS)
 	{
-		Log::Error("Failed to create culling pass pipeline layout");
+		Log::Error("Failed to create culling pass pipeline");
 		return false;
 	}
 	
