@@ -273,9 +273,7 @@ bool GraphicsPipelineVk::CreateResources()
         Log::Error("Failed to allocate descriptor set 0");
         return false;
     }
-
     
-
     std::array<VkWriteDescriptorSet, 6> descriptorWrites{};
     VkDescriptorBufferInfo cameraBufferInfo = CreateDescriptorBufferInfo(m_CameraDataBuffer, CameraData::GetAlignedByteSizes());
     UpdateBufferDescriptor(descriptorWrites[0], m_DescriptorSetSpace0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &cameraBufferInfo, GetBindingSlot(ERegisterType::ConstantBuffer, 0)); // _CameraData 
@@ -333,9 +331,6 @@ bool GraphicsPipelineVk::CreateResources()
         , (uint32_t)imageDescriptorInfos.size()
         , GetBindingSlot(ERegisterType::ShaderResource, 0)); // _MainTex[]
     
-   
-    
-
     vkUpdateDescriptorSets(m_DeviceHandle, (uint32_t)descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
     
     return true;

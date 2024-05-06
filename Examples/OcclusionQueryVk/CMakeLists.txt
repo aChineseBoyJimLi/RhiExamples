@@ -1,9 +1,11 @@
-set(project GpuQueryVk)
+set(project OcclusionQueryVk)
 set(folder "Examples")
 
 file(GLOB sources "*.cpp" "*.h")
+set(base_sources ${CMAKE_CURRENT_SOURCE_DIR}/../AppBaseDx.h
+	            ${CMAKE_CURRENT_SOURCE_DIR}/../AppBaseDx.cpp)
 
-add_executable(${project} WIN32 ${sources})
+add_executable(${project} WIN32 ${sources} ${base_sources})
 add_dependencies(${project} Common Shaders)
 set_target_properties(${project} PROPERTIES FOLDER ${folder})
 target_link_libraries(${project} PRIVATE Common )

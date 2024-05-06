@@ -91,7 +91,7 @@ private:
     void DestroyDescriptorSet();
     void UpdateConstants();
     
-    VkDescriptorSetLayout                   m_DescriptorLayout;
+    VkDescriptorSetLayout                   m_DescriptorLayoutSpace0;
     VkDescriptorSetLayout                   m_DescriptorLayoutSpace1;
     VkDescriptorSetLayout                   m_CullingPassDescriptorSetLayout;
     std::shared_ptr<AssetsManager::Blob>    m_VertexShaderBlob;
@@ -146,6 +146,7 @@ private:
 
     std::array<VkDrawIndexedIndirectCommand, s_InstancesCount> m_IndirectDrawCommands;
     
-    VkDescriptorSet             m_DescriptorSet;
+    VkDescriptorSet             m_DescriptorSetSpace0;
+    VkDescriptorSet             m_DescriptorSetSpace1;
     VkDescriptorSet             m_CullingPassDescriptorSet;
 };

@@ -70,8 +70,9 @@ void IndirectDrawVk::Tick()
         scissor.extent = m_Capabilities.currentExtent;
         vkCmdSetScissor(m_CmdBufferHandle, 0, 1, &scissor);
 
+        VkDescriptorSet descriptorSets[2] = { m_DescriptorSetSpace0, m_DescriptorSetSpace1 };
         vkCmdBindPipeline(m_CmdBufferHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineState);
-        vkCmdBindDescriptorSets(m_CmdBufferHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSet, 0, nullptr);
+        vkCmdBindDescriptorSets(m_CmdBufferHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 2, descriptorSets, 0, nullptr);
 
         VkBuffer vertexBuffers[] = { m_VerticesBuffer };
         VkDeviceSize offsets[] = { 0 };
