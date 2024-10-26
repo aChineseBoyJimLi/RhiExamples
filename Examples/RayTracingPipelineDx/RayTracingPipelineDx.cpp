@@ -84,7 +84,7 @@ bool RayTracingPipelineDx::CreateDevice()
             if (SUCCEEDED(D3D12CreateDevice(tempAdapter.Get(), s_FeatureLevel, IID_PPV_ARGS(&TempDevice))))
             {
                 D3D12_FEATURE_DATA_D3D12_OPTIONS5 features5; // Check for ray tracing support
-                if(SUCCEEDED(TempDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7))))
+                if(SUCCEEDED(TempDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5))))
                 {
                     if(features5.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
                     {

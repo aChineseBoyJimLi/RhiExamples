@@ -108,9 +108,7 @@ protected:
     void Present();
     
     VkInstance                  m_InstanceHandle;
-#if _DEBUG || DEBUG
     VkDebugUtilsMessengerEXT    m_DebugMessenger;
-#endif
     VkPhysicalDevice            m_GpuHandle;
     VkPhysicalDeviceProperties  m_GpuProperties;
     VkPhysicalDeviceFeatures    m_GpuFeatures;

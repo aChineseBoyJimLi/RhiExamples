@@ -300,7 +300,8 @@ bool GraphicsPipelineVk::CreateResources()
         , GetBindingSlot(ERegisterType::Sampler, 0)); // _MainTexSampler
     
     // Allocate descriptor set 1
-    uint32_t descriptorCounts[2] = {s_TexturesCount, 1};
+    //uint32_t descriptorCounts[2] = {s_TexturesCount, 1};
+    uint32_t descriptorCounts[1] = { s_TexturesCount };
     VkDescriptorSetVariableDescriptorCountAllocateInfoEXT variableDescriptorCountAllocInfo = {};
     variableDescriptorCountAllocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
     variableDescriptorCountAllocInfo.descriptorSetCount = 1;

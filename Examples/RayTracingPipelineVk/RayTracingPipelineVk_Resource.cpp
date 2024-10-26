@@ -454,7 +454,8 @@ bool RayTracingPipelineVk::CreateBottomLevelAccelStructure()
         , scratchBuffer
         , &accelerationStructureGeometry
         , m_Mesh->GetPrimCount());
-
+    
+    
     BuildAccelerationStructure(VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR
         , m_ProceduralGeoBLAS
         , proceduralGeoScratchBuffer

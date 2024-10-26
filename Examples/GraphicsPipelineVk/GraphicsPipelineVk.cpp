@@ -136,8 +136,8 @@ bool GraphicsPipelineVk::CreateDevice()
     insCreateInfo.ppEnabledLayerNames = s_ValidationLayerNames.data();
     insCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 #else
-    instanceCreateInfo.enabledLayerCount = 0;
-    instanceCreateInfo.pNext = nullptr;
+    insCreateInfo.enabledLayerCount = 0;
+    insCreateInfo.pNext = nullptr;
 #endif
 
     VkResult result = vkCreateInstance(&insCreateInfo, nullptr, &m_InstanceHandle);
